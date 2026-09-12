@@ -74,6 +74,12 @@ Pendiente de tu lado: disparar un nuevo build (push, o "Retry build" sobre el ú
 probar `https://pixifinanzas.<tu-subdominio>.workers.dev` con `lgiancare` / `Li$aClo91`. Si el
 build vuelve a fallar, pegame el log — esta sesión no tiene acceso al dashboard de builds.
 
+**Gotcha de secrets + Gradual Deployments**: si guardás/rotás un secret (`JWT_SECRET`,
+`PASSWORD_PEPPER`) en el dashboard, la versión del Worker que ya está sirviendo tráfico puede
+seguir con el valor viejo — los bindings quedan fijados por versión. Después de tocar un
+secret, hay que disparar un build/deploy nuevo (push, o "Create deployment") para que la
+próxima versión lo capture.
+
 ## Decisiones sobre pendientes del modelo (`README-handoff.md` §2)
 
 - `ID_TIPO_GASTO` en `GASTOS_TARJETA`: ya viene en `Gastos_modelo_v3.md`, no fue necesario agregarlo.
