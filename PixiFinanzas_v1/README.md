@@ -6,20 +6,21 @@ módulo Gastos completo, módulo Inversiones como stub "Próximamente".
 
 ## Stack
 
-React 19 + Vite + Tailwind + ECharts (frontend) · Cloudflare Pages Functions + Hono (API)
-· Cloudflare D1/SQLite (datos) · JWT en cookie httpOnly + PBKDF2 (auth) · SheetJS (export/import
-.xlsx en el browser) — tal como quedó definido en `README-handoff.md` §1.
+React 19 + Vite + Tailwind + ECharts (frontend) · Cloudflare Workers + Hono (API) · Cloudflare
+Workers Static Assets (sirve `dist/`, con fallback SPA) · Cloudflare D1/SQLite (datos) · JWT en
+cookie httpOnly + PBKDF2 (auth) · SheetJS (export/import .xlsx en el browser) — según
+`README-handoff.md` §1, adaptado de "Cloudflare Pages" a Workers Builds (ver nota más abajo).
 
 ## Estructura
 
 ```
 src/            Frontend (React + Tailwind + ECharts)
-functions/api/  Cloudflare Pages Functions — entrypoint Hono
+worker/index.ts Entrypoint del Worker (main de wrangler.toml) — reexporta la app Hono
 functions/_lib/ App Hono, queries SQL, auth (PBKDF2 + JWT), tipos
 migrations/     Esquema D1 + seed (catálogos, ~840 gastos históricos, usuario inicial)
 scripts/        build-seed.mjs — parsea uploads/Gastos_modelo_v3.md a SQL
 tests/unit/     Vitest — API completa contra D1 en memoria (node:sqlite)
-tests/e2e/      Playwright — flujo de usuario end-to-end contra wrangler pages dev
+tests/e2e/      Playwright — flujo de usuario end-to-end contra wrangler dev
 ```
 
 ## Correr en desarrollo
@@ -29,11 +30,11 @@ npm install
 node scripts/build-seed.mjs                              # regenera migrations/000{2,3}_*.sql si cambian los uploads
 npx wrangler d1 migrations apply pixifinanzas --local     # aplica esquema + seed a D1 local
 cp .dev.vars.example .dev.vars                            # JWT_SECRET, PASSWORD_PEPPER locales
-npm run build && npm run pages:dev                        # sirve frontend + API en http://localhost:8788
+npm run worker:dev                                        # build + sirve frontend/assets + API en http://localhost:8788
 ```
 
 Para desarrollo con hot-reload del frontend solamente: `npm run dev` (proxea `/api` a
-`http://127.0.0.1:8788`, así que corré `pages:dev` en paralelo si necesitás la API).
+`http://127.0.0.1:8788`, así que corré `worker:dev` en paralelo si necesitás la API).
 
 Usuario inicial (Especificaciones_Funcionales.md §"Identidad del primer usuario"):
 `lgiancare` / `Li$aClo91` — rol Rolemaster.
@@ -41,34 +42,37 @@ Usuario inicial (Especificaciones_Funcionales.md §"Identidad del primer usuario
 ## Tests
 
 ```bash
-npm test        # Vitest — 28 casos: auth, roles, home, costos, altas (incl. cuotas),
+npm test        # Vitest — 29 casos: auth, roles, home, costos, altas (incl. cuotas),
                  # consultas retroactivas + validación + historial, maestros CRUD, usuarios, cotización
-npm run e2e      # Playwright — flujo real de browser contra wrangler pages dev (requiere D1 local migrado)
-npx tsc --noEmit # type-check de src/ + functions/
+npm run e2e      # Playwright — flujo real de browser contra wrangler dev (requiere D1 local migrado)
+npx tsc --noEmit # type-check de src/, functions/ y worker/
 ```
 
-Todo lo anterior corrió en limpio antes de este commit (28/28 unit + 10/10 e2e + build + typecheck).
+Todo lo anterior corrió en limpio antes de este commit (29/29 unit + 10/10 e2e + build + typecheck).
 
 ## Deploy a Cloudflare
 
-El proyecto Pages ya está creado y conectado a este repo de GitHub (deploy automático en cada
-push, sin GitHub Actions). Ya hecho vía la integración de Cloudflare de esta sesión:
+**Nota sobre la arquitectura**: el handoff original asumía Cloudflare Pages (routing por
+`functions/api/[[route]].ts`). El proyecto que se creó en el dashboard es en realidad un
+**Worker moderno con "Workers Builds"** (deploy command `npx wrangler deploy`, no Pages) — un
+`wrangler.toml` pensado para Pages no sirve ahí, así que se adaptó a la convención de Workers:
+`main = "worker/index.ts"` + `[assets]` (Workers Static Assets, sirviendo `dist/` con
+`not_found_handling = "single-page-application"` para el ruteo del SPA) en vez de
+`pages_build_output_dir`. Verificado en local con `wrangler dev` (assets, fallback SPA y API
+los tres funcionando) antes de este commit.
 
-- ✅ D1 `pixifinanzas` creada (`database_id` real ya está en `wrangler.toml`).
+Ya hecho vía la integración de Cloudflare + GitHub de esta sesión:
+
+- ✅ D1 `pixifinanzas` creada y con el `database_id` real en `wrangler.toml`.
 - ✅ Esquema + seed completo aplicado en la base remota (catálogos, ~840 gastos históricos,
-  usuario inicial) — verificado por consulta directa, incluye la corrección de `FECHA_CARGA`.
+  usuario inicial), incluida la corrección de `FECHA_CARGA`.
+- ✅ Secrets `JWT_SECRET` y `PASSWORD_PEPPER` configurados en el proyecto (confirmado por vos).
+- ✅ `wrangler.toml` corregido al modelo Worker real y pusheado — el próximo build debería
+  levantar `main` + `[assets]` + el binding `DB` automáticamente, sin pasos manuales de binding.
 
-Pendiente — esta sesión no tiene acceso al dashboard de Pages ni a `wrangler pages secret`,
-así que lo siguiente lo tenés que hacer vos:
-
-1. En el proyecto Pages → **Settings → Functions → D1 database bindings** → agregar binding
-   `DB` → base `pixifinanzas`. (Si Pages ya levantó el `[[d1_databases]]` de `wrangler.toml`
-   solo, este paso puede no hacer falta — probá primero sin tocar nada.)
-2. `wrangler pages secret put JWT_SECRET --project-name=pixifinanzas` y
-   `wrangler pages secret put PASSWORD_PEPPER --project-name=pixifinanzas` (o por el dashboard,
-   Settings → Environment variables → Secret).
-3. Redeploy (push cualquier commit, o "Retry deployment") y probar login con
-   `lgiancare` / `Li$aClo91`.
+Pendiente de tu lado: disparar un nuevo build (push, o "Retry build" sobre el último commit) y
+probar `https://pixifinanzas.<tu-subdominio>.workers.dev` con `lgiancare` / `Li$aClo91`. Si el
+build vuelve a fallar, pegame el log — esta sesión no tiene acceso al dashboard de builds.
 
 ## Decisiones sobre pendientes del modelo (`README-handoff.md` §2)
 

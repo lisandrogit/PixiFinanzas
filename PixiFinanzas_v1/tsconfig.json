@@ -15,5 +15,5 @@
     "noUnusedParameters": false,
     "types": ["vite/client", "node"]
   },
-  "include": ["src", "functions", "scripts", "tests"]
+  "include": ["src", "functions", "worker", "scripts", "tests"]
 }

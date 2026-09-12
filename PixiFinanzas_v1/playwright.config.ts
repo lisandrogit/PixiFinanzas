@@ -9,7 +9,7 @@ export default defineConfig({
     launchOptions: { executablePath: '/opt/pw-browsers/chromium' },
   },
   webServer: {
-    command: 'npm run pages:dev',
+    command: 'npm run worker:dev',
     url: 'http://localhost:8788',
     reuseExistingServer: true,
     timeout: 60_000,

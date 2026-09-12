@@ -1,6 +1,12 @@
 name = "pixifinanzas"
+main = "worker/index.ts"
 compatibility_date = "2026-09-01"
-pages_build_output_dir = "dist"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
 
 [[d1_databases]]
 binding = "DB"
@@ -10,6 +16,6 @@ database_id = "bfb88b15-f6ae-4560-85e6-11a3c416be48"
 [vars]
 SESSION_TIMEOUT_MIN = "60"
 DOLAR_API_URL = "https://dolarapi.com/v1/dolares/oficial"
-# JWT_SECRET y PASSWORD_PEPPER se configuran como secrets (ver README):
-#   wrangler pages secret put JWT_SECRET
-#   wrangler pages secret put PASSWORD_PEPPER
+# JWT_SECRET y PASSWORD_PEPPER se configuran como secrets:
+#   wrangler secret put JWT_SECRET
+#   wrangler secret put PASSWORD_PEPPER

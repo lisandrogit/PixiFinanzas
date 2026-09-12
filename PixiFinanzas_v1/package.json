@@ -12,14 +12,14 @@
     "e2e": "playwright test",
     "seed:build": "node scripts/build-seed.mjs",
     "db:migrate:local": "wrangler d1 migrations apply pixifinanzas --local",
-    "pages:dev": "npm run build && wrangler pages dev dist --d1=DB=pixifinanzas --compatibility-date=2026-09-01"
+    "worker:dev": "npm run build && wrangler dev --port 8788"
   },
   "dependencies": {
+    "echarts": "^5.5.1",
+    "echarts-for-react": "^3.0.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
-    "echarts": "^5.5.1",
-    "echarts-for-react": "^3.0.2",
     "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   },
@@ -38,6 +38,6 @@
     "vite": "^5.4.8",
     "vite-plugin-pwa": "^0.20.5",
     "vitest": "^2.1.1",
-    "wrangler": "^3.78.10"
+    "wrangler": "^4.131.1"
   }
 }
