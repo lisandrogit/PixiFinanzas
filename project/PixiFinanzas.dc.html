@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/modernist-519f7d0b-10a7-4efc-a006-a9567a5c94fc/styles.css">
+<script src="_ds/modernist-519f7d0b-10a7-4efc-a006-a9567a5c94fc/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap">
+<style>
+  :root{
+    --font-heading:"Roboto", system-ui, sans-serif;
+    --font-body:"Roboto", system-ui, sans-serif;
+    --font-heading-weight:700;
+    --radius-sm:6px;
+    --radius-md:8px;
+    --radius-lg:12px;
+    --color-accent:#1565d8;
+    --color-accent-100:#eef4fe;
+    --color-accent-200:#d6e4fb;
+    --color-accent-300:#a9c8f4;
+    --color-accent-400:#5b93e6;
+    --color-accent-500:#1565d8;
+    --color-accent-600:#0f4fac;
+    --color-accent-700:#0b3a8c;
+    --color-teal:#0f8f86;
+  }
+  body{margin:0; font-family:"Roboto", system-ui, sans-serif}
+  h1,h2,h3,h4,h5,h6{font-family:"Roboto", system-ui, sans-serif; font-weight:700}
+  a{color:var(--color-accent-700)}
+  a:hover{color:var(--color-accent)}
+  .btn{border-radius:8px}
+  .input, select.input, input.input{border-radius:8px}
+  .seg{gap:6px}
+  .seg-opt{border-radius:8px}
+</style>
+</helmet>
+<div style="display:flex; width:100%; min-height:100vh; background:var(--color-bg); color:var(--color-text); font-family:var(--font-body)">
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="pxGradArea" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1565d8" stop-opacity="0.28"></stop>
+        <stop offset="100%" stop-color="#1565d8" stop-opacity="0"></stop>
+      </linearGradient>
+      <linearGradient id="pxGradBarA" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#4a90ef"></stop>
+        <stop offset="100%" stop-color="#0b3a8c"></stop>
+      </linearGradient>
+      <linearGradient id="pxGradBarB" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#3ec8b8"></stop>
+        <stop offset="100%" stop-color="#0b6b64"></stop>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <aside style="width:246px; flex:0 0 246px; border-right:2px solid var(--color-divider); display:flex; flex-direction:column; background:var(--color-bg)">
+    <div style="padding:20px 20px 16px; border-bottom:2px solid var(--color-divider)">
+      <img src="uploads/Logo_App.png" alt="PixiFinanzas" style="width:104px; height:auto">
+    </div>
+    <nav style="display:flex; flex-direction:column; padding:12px 0; flex:1">
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+        <button onClick="{{ item.go }}" style="{{ item.style }}" style-hover="background:var(--color-accent-100)">
+          <span style="display:flex; align-items:center; gap:10px; font-size:13px; letter-spacing:0.04em; text-transform:uppercase; font-family:var(--font-heading); font-weight:800">{{ item.label }}</span>
+          <span style="font-size:10px; letter-spacing:0.08em; color:var(--color-neutral-600)">{{ item.badge }}</span>
+        </button>
+      </sc-for>
+    </nav>
+    <div style="padding:16px 20px; border-top:2px solid var(--color-divider); display:flex; flex-direction:column; gap:6px">
+      <span style="font-size:13px; font-family:var(--font-heading); font-weight:800">Lisandro Giancarelli</span>
+      <span style="font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-neutral-600)">lgiancare · Rolemaster</span>
+      <button onClick="{{ askLogout }}" class="btn btn-ghost" style="justify-content:flex-start; padding-left:0; font-size:12px; color:var(--color-accent-700)">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <main style="flex:1; min-width:0; display:flex; flex-direction:column">
+
+    <header style="display:flex; align-items:flex-end; justify-content:space-between; gap:24px; padding:24px 32px 18px; border-bottom:2px solid var(--color-divider)">
+      <div style="display:flex; flex-direction:column; gap:2px">
+        <span style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--color-neutral-600)">{{ screenKicker }}</span>
+        <h2 style="margin:0; font-size:30px">{{ greeting }}</h2>
+        <span style="font-size:13px; color:var(--color-neutral-700)">{{ todayLabel }}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px">
+        <span style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-600)">Sesión expira en {{ sessionLeft }}</span>
+        <button onClick="{{ refresh }}" class="btn btn-primary" style="padding:10px 18px">ACTUALIZAR</button>
+        <button onClick="{{ goConfig }}" class="btn btn-secondary" title="Configuraciones" style="padding:10px 12px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.38.42.7.79.9H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </div>
+    </header>
+
+    <div style="flex:1; min-width:0; padding:28px 32px 56px">
+
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; flex-direction:column; gap:32px">
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); gap:32px; align-items:stretch">
+            <section style="min-width:0; overflow-x:auto">
+              <h6 style="margin:0 0 12px">Próximos vencimientos</h6>
+              <table class="table" style="width:100%; min-width:400px; table-layout:fixed">
+                <thead>
+                  <tr>
+                    <th style="text-align:left">Medio de pago</th>
+                    <sc-for list="{{ nextPeriods }}" as="p" hint-placeholder-count="3">
+                      <th style="text-align:right">{{ p.label }}</th>
+                    </sc-for>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{ vencRows }}" as="row" hint-placeholder-count="6">
+                    <tr>
+                      <td style="{{ row.labelStyle }}">{{ row.label }}</td>
+                      <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="3">
+                        <td style="{{ c.style }}">{{ c.text }}</td>
+                      </sc-for>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+              <div style="display:flex; align-items:center; gap:10px; margin-top:12px">
+                <span style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-700)">Menor</span>
+                <span style="flex:1; max-width:180px; height:8px; border-radius:999px; background:linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 8%, #fff), color-mix(in srgb, var(--color-accent) 54%, #fff), var(--color-accent-700))"></span>
+                <span style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-700)">Mayor por período</span>
+              </div>
+            </section>
+
+            <section style="display:flex; flex-direction:column">
+              <h6 style="margin:0 0 12px">Salud financiera</h6>
+              <div style="border:2px solid var(--color-divider); padding:18px 20px 14px; flex:1; display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between">
+                <svg viewBox="0 0 300 172" style="width:100%; max-width:320px; height:auto">
+                  <sc-for list="{{ gaugeSegs }}" as="s" hint-placeholder-count="5">
+                    <path d="{{ s.d }}" fill="none" stroke="{{ s.color }}" stroke-width="26"></path>
+                  </sc-for>
+                  <sc-for list="{{ gaugeTicks }}" as="t" hint-placeholder-count="6">
+                    <text x="{{ t.x }}" y="{{ t.y }}" text-anchor="{{ t.anchor }}" font-size="10" font-family="Archivo" fill="#605d5d">{{ t.label }}</text>
+                  </sc-for>
+                  <line x1="150" y1="146" x2="{{ needle.x }}" y2="{{ needle.y }}" stroke="#201e1d" stroke-width="4"></line>
+                  <circle cx="150" cy="146" r="7" fill="#201e1d"></circle>
+                </svg>
+                <div style="display:flex; align-items:baseline; gap:10px; margin-top:6px">
+                  <span style="font-family:var(--font-heading); font-weight:800; font-size:34px; line-height:1">{{ variationLabel }}</span>
+                  <span style="font-size:12px; color:var(--color-neutral-700); max-width:200px">{{ variationNote }}</span>
+                </div>
+                <span style="background:var(--color-accent-100); color:var(--color-text); border:1px solid var(--color-accent-300); border-radius:8px; padding:8px 12px; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; margin-top:10px">Promedio 3 períodos cerrados vs. próximos 3</span>
+              </div>
+            </section>
+          </div>
+
+          <hr class="hr" style="margin:0">
+
+          <section style="display:flex; flex-direction:column; gap:14px">
+            <h6 style="margin:0">Exportación de resumen</h6>
+            <div style="display:flex; flex-wrap:wrap; align-items:flex-end; gap:16px">
+              <div class="field" style="min-width:220px">
+                <label for="expPeriod">Período</label>
+                <input class="input" id="expPeriod" list="periodList" value="{{ expPeriod }}" onChange="{{ setExpPeriod }}" placeholder="Escribí para buscar…">
+                <datalist id="periodList">
+                  <sc-for list="{{ allPeriods }}" as="p" hint-placeholder-count="4">
+                    <option value="{{ p.label }}"></option>
+                  </sc-for>
+                </datalist>
+              </div>
+              <div class="field" style="min-width:180px">
+                <label for="expCanal">Canal</label>
+                <select class="input" id="expCanal" value="{{ expCanal }}" onChange="{{ setExpCanal }}">
+                  <option value="Ambos">Ambos</option>
+                  <option value="Tarjeta">Tarjeta</option>
+                  <option value="Transferencia">Transferencia</option>
+                </select>
+              </div>
+              <button onClick="{{ exportXlsx }}" class="btn btn-primary" style="padding:11px 20px">Exportar .xlsx (ARS)</button>
+              <span style="background:var(--color-accent-100); color:var(--color-text); border:1px solid var(--color-accent-300); border-radius:8px; padding:8px 12px; font-size:12px; line-height:1.45; max-width:340px">Incluye todos los atributos del modelo según el canal elegido. Exportación siempre en ARS.</span>
+            </div>
+          </section>
+
+          <hr class="hr" style="margin:0">
+
+          <section style="display:flex; flex-direction:column; gap:16px">
+            <div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:20px">
+              <h6 style="margin:0">Resumen de gastos · últimos 9 meses cerrados</h6>
+              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:18px">
+                <div class="seg">
+                  <button onClick="{{ setArs }}" class="seg-opt" aria-pressed="{{ isArs }}" style="{{ arsStyle }}">ARS</button>
+                  <button onClick="{{ setUsd }}" class="seg-opt" aria-pressed="{{ isUsd }}" style="{{ usdStyle }}">USD</button>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:6px">
+                  <sc-for list="{{ catChips }}" as="c" hint-placeholder-count="8">
+                    <button onClick="{{ c.toggle }}" style="{{ c.style }}">{{ c.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:28px">
+              <figure style="border:2px solid var(--color-divider); padding:16px 18px 12px">
+                <figcaption style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-700); margin:0 0 10px">Total por canal · {{ currency }}</figcaption>
+                <svg viewBox="0 0 560 250" style="width:100%; height:auto">
+                  <sc-for list="{{ chanChart.grid }}" as="g" hint-placeholder-count="4">
+                    <g><line x1="48" y1="{{ g.y }}" x2="548" y2="{{ g.y }}" stroke="#d7d3d3" stroke-width="1"></line><text x="42" y="{{ g.ty }}" text-anchor="end" font-size="10" font-family="Archivo" fill="#7d7979">{{ g.label }}</text></g>
+                  </sc-for>
+                  <sc-for list="{{ chanChart.series }}" as="s" hint-placeholder-count="3">
+                    <g><path d="{{ s.area }}" fill="{{ s.areaFill }}" stroke="none"></path><polyline points="{{ s.points }}" fill="none" stroke="{{ s.color }}" stroke-width="{{ s.width }}" stroke-linecap="round" stroke-linejoin="round"></polyline><circle cx="{{ s.dotX }}" cy="{{ s.dotY }}" r="4" fill="#f3f2f2" stroke="{{ s.color }}" stroke-width="2.5"></circle></g>
+                  </sc-for>
+                  <sc-for list="{{ chanChart.xs }}" as="x" hint-placeholder-count="9">
+                    <text x="{{ x.x }}" y="242" text-anchor="middle" font-size="10" font-family="Archivo" fill="#7d7979">{{ x.label }}</text>
+                  </sc-for>
+                </svg>
+                <div style="display:flex; gap:18px; margin-top:8px">
+                  <sc-for list="{{ chanChart.legend }}" as="l" hint-placeholder-count="3">
+                    <span style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--color-neutral-800)"><i style="{{ l.swatch }}"></i>{{ l.label }}</span>
+                  </sc-for>
+                </div>
+              </figure>
+
+              <figure style="border:2px solid var(--color-divider); padding:16px 18px 12px">
+                <figcaption style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-700); margin:0 0 10px">Fijos vs. variables · {{ currency }}</figcaption>
+                <svg viewBox="0 0 560 250" style="width:100%; height:auto">
+                  <sc-for list="{{ typeChart.grid }}" as="g" hint-placeholder-count="4">
+                    <g><line x1="48" y1="{{ g.y }}" x2="548" y2="{{ g.y }}" stroke="#d7d3d3" stroke-width="1"></line><text x="42" y="{{ g.ty }}" text-anchor="end" font-size="10" font-family="Archivo" fill="#7d7979">{{ g.label }}</text></g>
+                  </sc-for>
+                  <sc-for list="{{ typeChart.bars }}" as="b" hint-placeholder-count="18">
+                    <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" rx="3" fill="{{ b.color }}"></rect>
+                  </sc-for>
+                  <polyline points="{{ typeChart.totalPoints }}" fill="none" stroke="#201e1d" stroke-width="2" stroke-dasharray="5 4"></polyline>
+                  <sc-for list="{{ typeChart.xs }}" as="x" hint-placeholder-count="9">
+                    <text x="{{ x.x }}" y="242" text-anchor="middle" font-size="10" font-family="Archivo" fill="#7d7979">{{ x.label }}</text>
+                  </sc-for>
+                </svg>
+                <div style="display:flex; gap:18px; margin-top:8px">
+                  <sc-for list="{{ typeChart.legend }}" as="l" hint-placeholder-count="3">
+                    <span style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--color-neutral-800)"><i style="{{ l.swatch }}"></i>{{ l.label }}</span>
+                  </sc-for>
+                </div>
+              </figure>
+            </div>
+          </section>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isCostos }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:28px">
+          <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px">
+            <h6 style="margin:0">Costos fijos y variables</h6>
+            <div class="seg">
+              <button onClick="{{ setArs }}" class="seg-opt" aria-pressed="{{ isArs }}" style="{{ arsStyle }}">ARS</button>
+              <button onClick="{{ setUsd }}" class="seg-opt" aria-pressed="{{ isUsd }}" style="{{ usdStyle }}">USD</button>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:28px">
+            <figure style="border:2px solid var(--color-divider); padding:16px 18px 12px">
+              <figcaption style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-700); margin:0 0 10px">Detalle de costos fijos · 9 meses cerrados · {{ currency }}</figcaption>
+              <svg viewBox="0 0 560 250" style="width:100%; height:auto">
+                <sc-for list="{{ fixedChart.grid }}" as="g" hint-placeholder-count="4">
+                  <g><line x1="48" y1="{{ g.y }}" x2="548" y2="{{ g.y }}" stroke="#d7d3d3" stroke-width="1"></line><text x="42" y="{{ g.ty }}" text-anchor="end" font-size="10" font-family="Archivo" fill="#7d7979">{{ g.label }}</text></g>
+                </sc-for>
+                <sc-for list="{{ fixedChart.series }}" as="s" hint-placeholder-count="1">
+                  <g><path d="{{ s.area }}" fill="{{ s.areaFill }}" stroke="none"></path><polyline points="{{ s.points }}" fill="none" stroke="{{ s.color }}" stroke-width="{{ s.width }}" stroke-linecap="round" stroke-linejoin="round"></polyline><circle cx="{{ s.dotX }}" cy="{{ s.dotY }}" r="4" fill="#f3f2f2" stroke="{{ s.color }}" stroke-width="2.5"></circle></g>
+                </sc-for>
+                <sc-for list="{{ fixedChart.xs }}" as="x" hint-placeholder-count="9">
+                  <text x="{{ x.x }}" y="242" text-anchor="middle" font-size="10" font-family="Archivo" fill="#7d7979">{{ x.label }}</text>
+                </sc-for>
+              </svg>
+            </figure>
+
+            <figure style="border:2px solid var(--color-divider); padding:16px 18px 12px">
+              <figcaption style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-700); margin:0 0 10px">Participación de costos fijos sobre ingresos · 12 meses</figcaption>
+              <svg viewBox="0 0 560 250" style="width:100%; height:auto">
+                <sc-for list="{{ shareChart.grid }}" as="g" hint-placeholder-count="4">
+                  <g><line x1="48" y1="{{ g.y }}" x2="548" y2="{{ g.y }}" stroke="#d7d3d3" stroke-width="1"></line><text x="42" y="{{ g.ty }}" text-anchor="end" font-size="10" font-family="Archivo" fill="#7d7979">{{ g.label }}</text></g>
+                </sc-for>
+                <sc-for list="{{ shareChart.bars }}" as="b" hint-placeholder-count="12">
+                  <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" rx="3" fill="{{ b.color }}"></rect>
+                </sc-for>
+                <polyline points="{{ shareChart.totalPoints }}" fill="none" stroke="#201e1d" stroke-width="2"></polyline>
+                <sc-for list="{{ shareChart.xs }}" as="x" hint-placeholder-count="12">
+                  <text x="{{ x.x }}" y="242" text-anchor="middle" font-size="9" font-family="Archivo" fill="#7d7979">{{ x.label }}</text>
+                </sc-for>
+              </svg>
+            </figure>
+          </div>
+
+          <hr class="hr" style="margin:0">
+
+          <section style="display:flex; flex-direction:column; gap:14px">
+            <h6 style="margin:0">Detalle de costos variables · top 5 categorías · {{ currency }}</h6>
+            <figure style="border:2px solid var(--color-divider); padding:16px 18px 12px; margin:0">
+              <svg viewBox="0 0 560 250" style="width:100%; height:auto">
+                <sc-for list="{{ varChart.grid }}" as="g" hint-placeholder-count="4">
+                  <g><line x1="48" y1="{{ g.y }}" x2="548" y2="{{ g.y }}" stroke="#d7d3d3" stroke-width="1"></line><text x="42" y="{{ g.ty }}" text-anchor="end" font-size="10" font-family="Archivo" fill="#7d7979">{{ g.label }}</text></g>
+                </sc-for>
+                <sc-for list="{{ varChart.series }}" as="s" hint-placeholder-count="5">
+                  <g><path d="{{ s.area }}" fill="{{ s.areaFill }}" stroke="none"></path><polyline points="{{ s.points }}" fill="none" stroke="{{ s.color }}" stroke-width="{{ s.width }}" stroke-linecap="round" stroke-linejoin="round"></polyline><circle cx="{{ s.dotX }}" cy="{{ s.dotY }}" r="4" fill="#f3f2f2" stroke="{{ s.color }}" stroke-width="2.5"></circle></g>
+                </sc-for>
+                <sc-for list="{{ varChart.xs }}" as="x" hint-placeholder-count="9">
+                  <text x="{{ x.x }}" y="242" text-anchor="middle" font-size="10" font-family="Archivo" fill="#7d7979">{{ x.label }}</text>
+                </sc-for>
+              </svg>
+              <div style="display:flex; flex-wrap:wrap; gap:18px; margin-top:10px">
+                <sc-for list="{{ varChart.legend }}" as="l" hint-placeholder-count="5">
+                  <span style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--color-neutral-800)"><i style="{{ l.swatch }}"></i>{{ l.label }}</span>
+                </sc-for>
+              </div>
+            </figure>
+          </section>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isAlta }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:24px">
+          <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px">
+            <div class="seg">
+              <button onClick="{{ tabVariable }}" class="seg-opt" style="{{ tabVarStyle }}">Gasto variable</button>
+              <button onClick="{{ tabFijo }}" class="seg-opt" style="{{ tabFijoStyle }}">Gasto fijo (lote)</button>
+            </div>
+            <span style="font-size:12px; color:var(--color-neutral-700)">ID_GASTO autogenerado · FECHA_CARGA {{ todayShort }}</span>
+          </div>
+
+          <sc-if value="{{ showBanner }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:18px; border:2px solid var(--color-accent); border-radius:10px; background:#ffffff; padding:14px 18px">
+              <span style="font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--color-accent-700); font-family:var(--font-heading); font-weight:800">Dólar oficial · venta</span>
+              <span style="font-family:var(--font-heading); font-weight:800; font-size:24px; line-height:1">{{ dolarVenta }}</span>
+              <span style="font-size:12px; color:var(--color-neutral-700)">Actualizado {{ dolarFecha }}</span>
+              <button onClick="{{ updateDolar }}" class="btn btn-secondary" style="padding:8px 14px; font-size:12px">Actualizar cotización</button>
+              <span style="background:var(--color-accent-100); color:var(--color-text); border:1px solid var(--color-accent-300); border-radius:8px; padding:8px 12px; font-size:11px; line-height:1.45; max-width:340px">El valor se ingresa manualmente en el formulario y se guarda en CAT_COTIZACION_USD.</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isVariable }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(400px,1fr)); gap:32px">
+              <section style="display:flex; flex-direction:column; gap:18px">
+                <h6 style="margin:0">Alta de gasto variable</h6>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px">
+                  <div class="field"><label for="fCanal">Canal</label>
+                    <select class="input" id="fCanal" value="{{ vCanal }}" onChange="{{ setVCanal }}">
+                      <option value="Tarjeta">Tarjeta</option>
+                      <option value="Transferencia">Transferencia</option>
+                    </select>
+                  </div>
+                  <div class="field"><label for="fCat">Categoría</label>
+                    <select class="input" id="fCat" value="{{ vCat }}" onChange="{{ setVCat }}">
+                      <sc-for list="{{ categorias }}" as="c" hint-placeholder-count="11">
+                        <option value="{{ c.label }}">{{ c.label }}</option>
+                      </sc-for>
+                    </select>
+                  </div>
+                  <sc-if value="{{ isTarjeta }}" hint-placeholder-val="{{ true }}">
+                    <div class="field"><label for="fTar">Tarjeta</label>
+                      <select class="input" id="fTar" value="{{ vTarjeta }}" onChange="{{ setVTarjeta }}">
+                        <sc-for list="{{ tarjetas }}" as="t" hint-placeholder-count="4">
+                          <option value="{{ t.label }}">{{ t.label }}</option>
+                        </sc-for>
+                      </select>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ isTransferencia }}" hint-placeholder-val="{{ false }}">
+                    <div class="field"><label for="fCta">Cuenta</label>
+                      <select class="input" id="fCta" value="{{ vCuenta }}" onChange="{{ setVCuenta }}">
+                        <sc-for list="{{ cuentas }}" as="c" hint-placeholder-count="3">
+                          <option value="{{ c.label }}">{{ c.label }}</option>
+                        </sc-for>
+                      </select>
+                    </div>
+                  </sc-if>
+                  <div class="field"><label for="fDetalle">Detalle</label>
+                    <input class="input" id="fDetalle" value="{{ vDetalle }}" onChange="{{ setVDetalle }}" placeholder="ej. Zapatillas running">
+                  </div>
+                  <div class="field"><label for="fImporte">Importe (ARS)</label>
+                    <input class="input" id="fImporte" value="{{ vImporte }}" onChange="{{ setVImporte }}" inputmode="decimal" placeholder="0,00">
+                  </div>
+                  <div class="field"><label for="fCotiz">Cotización dólar</label>
+                    <input class="input" id="fCotiz" value="{{ vCotiz }}" onChange="{{ setVCotiz }}" inputmode="decimal">
+                  </div>
+                  <div class="field"><label for="fMes">MES_ABONO</label>
+                    <select class="input" id="fMes" value="{{ vMes }}" onChange="{{ setVMes }}">
+                      <sc-for list="{{ altaPeriods }}" as="p" hint-placeholder-count="6">
+                        <option value="{{ p.label }}">{{ p.label }}</option>
+                      </sc-for>
+                    </select>
+                  </div>
+                </div>
+
+                <sc-if value="{{ isTarjeta }}" hint-placeholder-val="{{ true }}">
+                  <div style="border:2px solid var(--color-divider); padding:16px 18px; display:flex; flex-direction:column; gap:14px">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px">
+                      <span style="font-size:11px; letter-spacing:0.12em; text-transform:uppercase; font-family:var(--font-heading); font-weight:800">Caso especial · compra en cuotas</span>
+                      <button onClick="{{ toggleCuotas }}" class="btn btn-ghost" style="font-size:12px; color:var(--color-accent-700); padding:4px 0">{{ cuotasToggleLabel }}</button>
+                    </div>
+                    <sc-if value="{{ enCuotas }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex; flex-direction:column; gap:14px">
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px">
+                          <div class="field"><label for="fCuotas">Cantidad de cuotas</label>
+                            <input class="input" id="fCuotas" value="{{ vCuotas }}" onChange="{{ setVCuotas }}" inputmode="numeric">
+                          </div>
+                          <div class="field"><label for="fCuotaImp">Importe por cuota (ARS)</label>
+                            <input class="input" id="fCuotaImp" value="{{ vCuotaImporte }}" onChange="{{ setVCuotaImporte }}" inputmode="decimal">
+                          </div>
+                          <div class="field"><label for="fCuotaIni">Período primera cuota</label>
+                            <select class="input" id="fCuotaIni" value="{{ vCuotaInicio }}" onChange="{{ setVCuotaInicio }}">
+                              <sc-for list="{{ altaPeriods }}" as="p" hint-placeholder-count="6">
+                                <option value="{{ p.label }}">{{ p.label }}</option>
+                              </sc-for>
+                            </select>
+                          </div>
+                        </div>
+                        <span style="background:var(--color-accent-100); color:var(--color-text); border:1px solid var(--color-accent-300); border-radius:8px; padding:8px 12px; font-size:12px; line-height:1.45">{{ cuotasNote }}</span>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-if>
+
+                <div style="display:flex; align-items:center; gap:14px">
+                  <button onClick="{{ saveVariable }}" class="btn btn-primary" style="padding:12px 22px">Guardar gasto</button>
+                  <span style="background:var(--color-accent-100); color:var(--color-text); border:1px solid var(--color-accent-300); border-radius:8px; padding:8px 12px; font-size:12px; line-height:1.45; max-width:380px">{{ saveHint }}</span>
+                </div>
+              </section>
+
+              <aside style="display:flex; flex-direction:column; gap:14px; min-width:0">
+                <h6 style="margin:0">Registros que se van a impactar</h6>
+                <div style="overflow-x:auto">
+                <table class="table" style="width:100%; min-width:380px; table-layout:fixed">
+                  <thead><tr><th style="text-align:left">Tabla</th><th style="text-align:left">MES_ABONO</th><th style="text-align:right">IMPORTE</th><th style="text-align:right">IMPORTE_USD</th></tr></thead>
+                  <tbody>
+                    <sc-for list="{{ previewRows }}" as="r" hint-placeholder-count="3">
+                      <tr><td style="font-size:11px; letter-spacing:0.04em">{{ r.tabla }}</td><td style="font-size:12px">{{ r.mes }}</td><td style="text-align:right; font-size:12px">{{ r.importe }}</td><td style="text-align:right; font-size:12px; color:var(--color-neutral-700)">{{ r.usd }}</td></tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+                </div>
+                <span style="background:var(--color-accent-100); color:var(--color-text); border:1px solid var(--color-accent-300); border-radius:8px; padding:8px 12px; font-size:11px; line-height:1.45">Se guardan los ID de cada maestro; en pantalla se muestra siempre la descripción.</span>
+              </aside>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isFijo }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:18px; min-width:0; overflow-x:auto">
+              <div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:18px">
+                <div class="field" style="min-width:220px"><label for="fLote">MES_ABONO del lote</label>
+                  <select class="input" id="fLote" value="{{ loteMes }}" onChange="{{ setLoteMes }}">
+                    <sc-for list="{{ altaPeriods }}" as="p" hint-placeholder-count="6">
+                      <option value="{{ p.label }}">{{ p.label }}</option>
+                    </sc-for>
+                  </select>
+                </div>
+                <span style="background:var(--color-accent-100); color:var(--color-text); border:1px solid var(--color-accent-300); border-radius:8px; padding:8px 12px; font-size:12px; line-height:1.45; max-width:440px">Precargado con los costos fijos del último período cerrado ({{ lastClosed }}) y su valor abonado. Editá, agregá o eliminá filas; el resto queda sin cambios.</span>
+              </div>
+
+              <table class="table" style="width:100%; min-width:820px">
+                <thead><tr><th style="text-align:left">Concepto</th><th style="text-align:left">Categoría</th><th style="text-align:left">Canal</th><th style="text-align:left">Tarjeta</th><th style="text-align:right">Importe ARS</th><th></th></tr></thead>
+                <tbody>
+                  <sc-for list="{{ fixedRows }}" as="row" hint-placeholder-count="7">
+                    <tr style="{{ row.rowStyle }}">
+                      <td><input class="input" value="{{ row.concepto }}" onChange="{{ row.setConcepto }}" style="padding:6px 8px; font-size:13px"></td>
+                      <td>
+                        <select class="input" value="{{ row.categoria }}" onChange="{{ row.setCategoria }}" style="padding:6px 8px; font-size:13px">
+                          <sc-for list="{{ categorias }}" as="c" hint-placeholder-count="11">
+                            <option value="{{ c.label }}">{{ c.label }}</option>
+                          </sc-for>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="input" value="{{ row.canal }}" onChange="{{ row.setCanal }}" style="padding:6px 8px; font-size:13px">
+                          <option value="Tarjeta">Tarjeta</option>
+                          <option value="Transferencia">Transferencia</option>
+                        </select>
+                      </td>
+                      <td>
+                        <sc-if value="{{ row.esTarjeta }}" hint-placeholder-val="{{ true }}">
+                          <select class="input" value="{{ row.tarjeta }}" onChange="{{ row.setTarjeta }}" style="padding:6px 8px; font-size:13px">
+                            <sc-for list="{{ tarjetas }}" as="t" hint-placeholder-count="4">
+                              <option value="{{ t.label }}">{{ t.label }}</option>
+                            </sc-for>
+                          </select>
+                        </sc-if>
+                        <sc-if value="{{ row.esTransferencia }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-size:12px; color:var(--color-neutral-600)">{{ row.cuenta }}</span>
+                        </sc-if>
+                      </td>
+                      <td style="text-align:right"><input class="input" value="{{ row.importe }}" onChange="{{ row.setImporte }}" inputmode="decimal" style="padding:6px 8px; font-size:13px; text-align:right"></td>
+                      <td style="text-align:right"><button onClick="{{ row.remove }}" class="btn btn-ghost" title="Eliminar" style="padding:4px 6px; color:var(--color-accent-700); font-size:12px">Eliminar</button></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+
+              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:16px">
+                <button onClick="{{ addFixedRow }}" class="btn btn-secondary" style="padding:10px 16px">Agregar gasto fijo</button>
+                <button onClick="{{ confirmLote }}" class="btn btn-primary" style="padding:10px 20px">Confirmar lote · {{ fixedCount }} registros</button>
+                <span style="font-family:var(--font-heading); font-weight:800; font-size:16px">Total {{ fixedTotal }}</span>
+                <span style="background:var(--color-accent-100); color:var(--color-text); border:1px solid var(--color-accent-300); border-radius:8px; padding:8px 12px; font-size:12px; line-height:1.45">{{ loteHint }}</span>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStub }}" hint-placeholder-val="{{ false }}">
+        <div style="border:2px solid var(--color-divider); padding:40px; display:flex; flex-direction:column; gap:10px; max-width:680px">
+          <span style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--color-neutral-600)">Fuera del alcance de este prototipo</span>
+          <h3 style="margin:0">{{ stubTitle }}</h3>
+          <p style="margin:0; background:var(--color-accent-100); color:var(--color-text); border:1px solid var(--color-accent-300); border-radius:8px; padding:12px 14px; font-size:14px; line-height:1.5; max-width:56ch">{{ stubText }}</p>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, #201e1d 55%, transparent); z-index:40">
+      <div class="dialog" style="width:min(520px,92vw); background:var(--color-bg); border:2px solid var(--color-text); padding:26px 28px; box-shadow:var(--shadow-lg)">
+        <h4 class="dialog-title" style="margin:0 0 8px">{{ dialogTitle }}</h4>
+        <p class="dialog-body" style="margin:0 0 20px; font-size:14px; color:var(--color-neutral-800)">{{ dialogBody }}</p>
+        <div class="dialog-actions" style="display:flex; gap:10px">
+          <button onClick="{{ dialogConfirm }}" class="btn btn-primary" style="padding:10px 18px">{{ dialogOk }}</button>
+          <button onClick="{{ closeDialog }}" class="btn btn-secondary" style="padding:10px 18px">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; bottom:24px; right:24px; background:var(--color-text); color:#f3f2f2; padding:14px 18px; font-size:13px; box-shadow:var(--shadow-md); z-index:50">{{ toast }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultCurrency&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ARS&quot;,&quot;USD&quot;],&quot;default&quot;:&quot;ARS&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Comportamiento&quot;},&quot;showDollarBanner&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Comportamiento&quot;},&quot;gaugeVariation&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:-30,&quot;max&quot;:30,&quot;step&quot;:1,&quot;default&quot;:null,&quot;unit&quot;:&quot;%&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Salud financiera&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    const fixedSeed = [
+      ['Alquiler','Hogar','Transferencia','','520000'],
+      ['Expensas','Hogar','Transferencia','','186400'],
+      ['Internet + cable','Operacion','Tarjeta','Visa Macro','48900'],
+      ['Celular','Operacion','Tarjeta','Master Uala','32750'],
+      ['Prepaga','Salud y Estilo','Transferencia','','214300'],
+      ['Colegio','Educacion','Transferencia','','268000'],
+      ['Suscripciones streaming','Suscripciones','Tarjeta','Master MercadoPago','27480']
+    ].map((r,i)=>({id:i+1, concepto:r[0], categoria:r[1], canal:r[2], tarjeta:r[3]||'Visa Macro', cuenta:'Cta Cte Banco Macro', importe:r[4]}));
+    this.state = {
+      screen:'home', altaTab:'variable',
+      currency: props.defaultCurrency || 'ARS',
+      offCats:{},
+      expPeriod:'Agosto 2026', expCanal:'Ambos',
+      vCanal:'Tarjeta', vCat:'Indumentaria', vTarjeta:'Visa Macro', vCuenta:'Cta Cte Banco Macro',
+      vDetalle:'', vImporte:'', vCotiz:'1530', vMes:'Octubre 2026',
+      enCuotas:false, vCuotas:'3', vCuotaImporte:'', vCuotaInicio:'Octubre 2026',
+      loteMes:'Septiembre 2026', fixedRows:fixedSeed, nextId:8,
+      dolarVenta:1530, dolarFecha:'04/09/2026',
+      dialog:null, toast:'', sessionLeft:'58 min'
+    };
+  }
+
+  // ── data ──────────────────────────────────────────────────────────────
+  months(){
+    return [
+      {k:'202512', s:'Dic 25', tar:742000, tra:934000, fijo:1180000, var_:496000},
+      {k:'202601', s:'Ene 26', tar:806500, tra:951000, fijo:1214000, var_:543500},
+      {k:'202602', s:'Feb 26', tar:688000, tra:962000, fijo:1238000, var_:412000},
+      {k:'202603', s:'Mar 26', tar:915000, tra:988000, fijo:1265000, var_:638000},
+      {k:'202604', s:'Abr 26', tar:864000, tra:1004000, fijo:1290000, var_:578000},
+      {k:'202605', s:'May 26', tar:792000, tra:1021000, fijo:1312000, var_:501000},
+      {k:'202606', s:'Jun 26', tar:948000, tra:1043000, fijo:1348000, var_:643000},
+      {k:'202607', s:'Jul 26', tar:1026000, tra:1058000, fijo:1372000, var_:712000},
+      {k:'202608', s:'Ago 26', tar:889000, tra:1074000, fijo:1396000, var_:567000}
+    ];
+  }
+  rate(){ return 1480; }
+  cats(){ return ['Vacaciones','Indumentaria','Educacion','Suscripciones','Boludeces','Salud y Estilo','Ajenos','Otros','Hogar','Operacion','Gastos Extraordinarios']; }
+  activeCats(){ const off=this.state.offCats; return this.cats().filter(c=>!off[c]); }
+  catFactor(){ return this.activeCats().length / this.cats().length * 0.62 + 0.38; }
+  money(n, cur){
+    const c = cur || this.state.currency;
+    const v = c==='USD' ? n/this.rate() : n;
+    return (c==='USD'?'US$ ':'$ ') + v.toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  short(n){
+    const c=this.state.currency;
+    const v = c==='USD' ? n/this.rate() : n;
+    if (c==='USD') return (v/1000).toFixed(1)+'k';
+    return (v/1000000).toFixed(2)+'M';
+  }
+
+  // ── chart geometry ───────────────────────────────────────────────────
+  frame(){ return {x0:48, x1:548, y0:16, y1:222}; }
+  gridFor(max, fmt){
+    const f=this.frame(), out=[];
+    for (let i=0;i<=4;i++){
+      const v = max*i/4, y = f.y1 - (f.y1-f.y0)*i/4;
+      out.push({y, ty:y+3, label:fmt(v)});
+    }
+    return out;
+  }
+  xPositions(n){
+    const f=this.frame(), step=(f.x1-f.x0)/n;
+    return Array.from({length:n},(_,i)=>f.x0+step*(i+0.5));
+  }
+  poly(values, max){
+    const f=this.frame(), xs=this.xPositions(values.length);
+    return values.map((v,i)=>xs[i].toFixed(1)+','+(f.y1-(f.y1-f.y0)*(max?v/max:0)).toFixed(1)).join(' ');
+  }
+  area(values, max){
+    const f=this.frame(), xs=this.xPositions(values.length);
+    const pts=values.map((v,i)=>xs[i].toFixed(1)+' '+(f.y1-(f.y1-f.y0)*(max?v/max:0)).toFixed(1));
+    return 'M '+xs[0].toFixed(1)+' '+f.y1+' L '+pts.join(' L ')+' L '+xs[xs.length-1].toFixed(1)+' '+f.y1+' Z';
+  }
+  lineChart(series, labels, fmt){
+    const max = Math.max(...series.flatMap(s=>s.values))*1.12 || 1;
+    const xs = this.xPositions(labels.length), f=this.frame();
+    const solo = series.length===1;
+    return {
+      grid: this.gridFor(max, fmt),
+      series: series.map(s=>({
+        color:s.color, width:s.width||2.5, points:this.poly(s.values,max),
+        area: solo ? this.area(s.values,max) : '',
+        areaFill: solo ? 'url(#pxGradArea)' : 'none',
+        dotX: xs[xs.length-1].toFixed(1),
+        dotY: (f.y1-(f.y1-f.y0)*(s.values[s.values.length-1]/max)).toFixed(1)
+      })),
+      xs: labels.map((l,i)=>({x:xs[i], label:l})),
+      legend: series.map(s=>({label:s.label, swatch:'width:14px;height:3px;background:'+s.color+';display:inline-block'}))
+    };
+  }
+  barChart(groups, labels, fmt, total){
+    const all = groups.flatMap(g=>g.values).concat(total||[]);
+    const max = Math.max(...all)*1.12 || 1;
+    const f=this.frame(), xs=this.xPositions(labels.length);
+    const step=(f.x1-f.x0)/labels.length, bw=Math.min(16,(step-10)/groups.length);
+    const bars=[];
+    groups.forEach((g,gi)=>g.values.forEach((v,i)=>{
+      const h=(f.y1-f.y0)*(v/max);
+      bars.push({x:(xs[i]-(bw*groups.length)/2+gi*bw).toFixed(1), y:(f.y1-h).toFixed(1), w:bw.toFixed(1), h:Math.max(h,1).toFixed(1), color:g.color});
+    }));
+    return {
+      grid:this.gridFor(max,fmt), bars,
+      totalPoints: total ? this.poly(total,max) : '',
+      xs: labels.map((l,i)=>({x:xs[i], label:l})),
+      legend: groups.map(g=>({label:g.label, swatch:'width:12px;height:12px;border-radius:3px;background:'+(g.swatch||g.color)+';display:inline-block'}))
+        .concat(total?[{label:'Total', swatch:'width:14px;height:3px;background:#201e1d;display:inline-block'}]:[])
+    };
+  }
+
+  // ── interactions ─────────────────────────────────────────────────────
+  go(s){ return ()=>this.setState({screen:s, dialog:null}); }
+  flash(t){ this.setState({toast:t}); clearTimeout(this._t); this._t=setTimeout(()=>this.setState({toast:''}),2600); }
+  field(k){ return e=>this.setState({[k]:e.target.value}); }
+
+  componentWillUnmount(){ clearTimeout(this._t); }
+
+  renderVals(){
+    const st=this.state, S=this;
+    const ms=this.months(), labels=ms.map(m=>m.s), k=this.catFactor();
+    const accent='#1565d8', teal='#0f8f86', ink='#201e1d';
+    const fmtMoney = v => this.short(v);
+    const cur = st.currency;
+
+    // next periods
+    const nextPeriods=[{label:'Octubre 2026'},{label:'Noviembre 2026'},{label:'Diciembre 2026'}];
+    const tarjetas=['Visa Macro','Master Uala','Master MercadoPago','AMEX'];
+    const perTarjeta={'Visa Macro':[412000,398500,386000],'Master Uala':[168300,174900,152400],'Master MercadoPago':[97600,104200,88300],'AMEX':[236400,241000,255800]};
+    const transfer=[1082000,1094500,1121000];
+    const cellStyle='text-align:right; font-variant-numeric:tabular-nums; font-size:13px';
+    const vencRows=[];
+    // mapa de calor: escala en degradé por período sobre el detalle de tarjetas
+    const colMin=nextPeriods.map((_,i)=>Math.min(...tarjetas.map(t=>perTarjeta[t][i])));
+    const colMax=nextPeriods.map((_,i)=>Math.max(...tarjetas.map(t=>perTarjeta[t][i])));
+    const heat=(v,i)=>{
+      const span=colMax[i]-colMin[i] || 1;
+      const t=(v-colMin[i])/span;
+      const isMax=v===colMax[i];
+      const bg = isMax ? 'var(--color-accent-700)'
+        : 'color-mix(in srgb, var(--color-accent) '+(8+t*46).toFixed(0)+'%, #ffffff)';
+      return cellStyle+'; background:'+bg+'; color:'+(isMax?'#ffffff':'var(--color-accent-700)')
+        +'; font-weight:'+(isMax?'700':'500');
+    };
+    tarjetas.forEach(t=>vencRows.push({
+      label:t, labelStyle:'font-size:13px; padding-left:18px; color:var(--color-neutral-800)',
+      cells: perTarjeta[t].map((v,i)=>({text:this.money(v,'ARS'), style:heat(v,i)}))
+    }));
+    const tarTotals=nextPeriods.map((_,i)=>tarjetas.reduce((a,t)=>a+perTarjeta[t][i],0));
+    vencRows.unshift({label:'Gastos tarjeta', labelStyle:'font-family:var(--font-heading); font-weight:800; font-size:13px',
+      cells:tarTotals.map(v=>({text:this.money(v,'ARS'), style:cellStyle+'; font-family:var(--font-heading); font-weight:800'}))});
+    vencRows.push({label:'Gastos transferencia', labelStyle:'font-family:var(--font-heading); font-weight:800; font-size:13px',
+      cells:transfer.map(v=>({text:this.money(v,'ARS'), style:cellStyle+'; font-family:var(--font-heading); font-weight:800'}))});
+    vencRows.push({label:'Total período', labelStyle:'font-family:var(--font-heading); font-weight:800; font-size:13px; border-top:2px solid var(--color-divider)',
+      cells:nextPeriods.map((_,i)=>({text:this.money(tarTotals[i]+transfer[i],'ARS'), style:cellStyle+'; font-family:var(--font-heading); font-weight:800; border-top:2px solid var(--color-divider)'}))});
+
+    // gauge
+    const last3=ms.slice(-3).reduce((a,m)=>a+m.tar+m.tra,0)/3;
+    const next3=nextPeriods.reduce((a,_,i)=>a+tarTotals[i]+transfer[i],0)/3;
+    const variation = this.props.gaugeVariation != null ? this.props.gaugeVariation : ((next3-last3)/last3*100);
+    const segColors=['#16794f','#5fae73','#e0b02c','#e07a3c','#c9372a'];
+    const segLabels=['-30%','-15%','0%','+15%','+30%'];
+    const cx=150, cy=146, r=104;
+    const polar=(t)=>{ const rad=Math.PI*(1-t); return {x:cx+r*Math.cos(rad), y:cy-r*Math.sin(rad)}; };
+    const gaugeSegs=segColors.map((c,i)=>{
+      const a=polar(i/5), b=polar((i+1)/5);
+      return {color:c, d:'M '+a.x.toFixed(1)+' '+a.y.toFixed(1)+' A '+r+' '+r+' 0 0 1 '+b.x.toFixed(1)+' '+b.y.toFixed(1)};
+    });
+    const gaugeTicks=segLabels.map((l,i)=>{
+      const p=polar(i/5+0.1), rr=1.28;
+      return {label:l, x:(cx+(p.x-cx)*rr).toFixed(1), y:(cy+(p.y-cy)*rr).toFixed(1), anchor: i<2?'end':(i===2?'middle':'start')};
+    });
+    const t=Math.max(0,Math.min(1,(variation+30)/60));
+    const nr=r-34, nrad=Math.PI*(1-t);
+    const needle={x:(cx+nr*Math.cos(nrad)).toFixed(1), y:(cy-nr*Math.sin(nrad)).toFixed(1)};
+    const variationLabel=(variation>0?'+':'')+variation.toFixed(1)+'%';
+    const variationNote = variation>2 ? 'Tendencia a incrementar el gasto en los próximos 3 períodos.'
+      : variation<-2 ? 'Tendencia a disminuir el gasto en los próximos 3 períodos.'
+      : 'Gasto estable respecto de los últimos 3 períodos cerrados.';
+
+    // charts
+    const chanChart=this.lineChart([
+      {label:'Tarjeta', values:ms.map(m=>m.tar*k), color:accent},
+      {label:'Transferencia', values:ms.map(m=>m.tra*k), color:teal},
+      {label:'Total ARS', values:ms.map(m=>(m.tar+m.tra)*k), color:ink, width:2}
+    ], labels, fmtMoney);
+    const typeChart=this.barChart([
+      {label:'Costo fijo', values:ms.map(m=>m.fijo*k), color:'url(#pxGradBarA)', swatch:accent},
+      {label:'Costo variable', values:ms.map(m=>m.var_*k), color:'url(#pxGradBarB)', swatch:teal}
+    ], labels, fmtMoney, ms.map(m=>(m.fijo+m.var_)*k));
+    const fixedChart=this.lineChart([{label:'Costo fijo', values:ms.map(m=>m.fijo), color:accent}], labels, fmtMoney);
+
+    const l12=['Sep 25','Oct 25','Nov 25','Dic 25','Ene 26','Feb 26','Mar 26','Abr 26','May 26','Jun 26','Jul 26','Ago 26'];
+    const share=[58,61,57,64,59,62,56,60,63,59,57,61];
+    const shareChart=this.barChart([{label:'% fijos / ingresos', values:share, color:'url(#pxGradBarA)', swatch:accent}], l12, v=>v.toFixed(0)+'%', share);
+
+    const varCats=[
+      {label:'Boludeces', color:accent, values:[148000,162000,121000,196000,171000,142000,188000,214000,163000]},
+      {label:'Indumentaria', color:teal, values:[96000,142000,78000,131000,118000,89000,124000,158000,104000]},
+      {label:'Salud y Estilo', color:'#8a5bd6', values:[82000,86000,79000,94000,91000,88000,97000,102000,93000]},
+      {label:'Vacaciones', color:'#c9372a', values:[54000,98000,42000,86000,74000,58000,112000,148000,62000]},
+      {label:'Otros', color:'#7d7979', values:[46000,52000,44000,61000,58000,49000,63000,71000,55000]}
+    ];
+    const varChart=this.lineChart(varCats.map(c=>({label:c.label, color:c.color, values:c.values, width:2.5})), labels, fmtMoney);
+
+    // alta variable preview
+    const imp=parseFloat(String(st.vImporte).replace(/\./g,'').replace(',','.'))||0;
+    const cot=parseFloat(st.vCotiz)||1;
+    const cuotaImp=parseFloat(String(st.vCuotaImporte).replace(/\./g,'').replace(',','.'))||0;
+    const nCuotas=Math.max(1,parseInt(st.vCuotas)||1);
+    const tabla = st.vCanal==='Tarjeta' ? 'GASTOS_TARJETA' : 'GASTOS_TRANSFERENCIA';
+    const periodSeq=['Septiembre 2026','Octubre 2026','Noviembre 2026','Diciembre 2026','Enero 2027','Febrero 2027','Marzo 2027','Abril 2027','Mayo 2027','Junio 2027'];
+    let previewRows;
+    if (st.vCanal==='Tarjeta' && st.enCuotas){
+      const start=Math.max(0,periodSeq.indexOf(st.vCuotaInicio));
+      previewRows=Array.from({length:nCuotas},(_,i)=>({
+        tabla, mes: periodSeq[(start+i)%periodSeq.length],
+        importe: this.money(cuotaImp,'ARS'), usd:'US$ '+(cuotaImp/cot).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})
+      }));
+    } else {
+      previewRows=[{tabla, mes:st.vMes, importe:this.money(imp,'ARS'), usd:'US$ '+(imp/cot).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}];
+    }
+
+    const fixedTotalN=st.fixedRows.reduce((a,r)=>a+(parseFloat(String(r.importe).replace(/\./g,'').replace(',','.'))||0),0);
+    const fixedRows=st.fixedRows.map((r,i)=>({
+      concepto:r.concepto, categoria:r.categoria, canal:r.canal, tarjeta:r.tarjeta, cuenta:r.cuenta,
+      importe:r.importe, esTarjeta:r.canal==='Tarjeta', esTransferencia:r.canal!=='Tarjeta',
+      rowStyle: i%2 ? 'background:color-mix(in srgb, var(--color-surface) 55%, transparent)' : '',
+      setConcepto:e=>this.updRow(r.id,'concepto',e.target.value),
+      setCategoria:e=>this.updRow(r.id,'categoria',e.target.value),
+      setCanal:e=>this.updRow(r.id,'canal',e.target.value),
+      setTarjeta:e=>this.updRow(r.id,'tarjeta',e.target.value),
+      setImporte:e=>this.updRow(r.id,'importe',e.target.value),
+      remove:()=>this.setState(s=>({fixedRows:s.fixedRows.filter(x=>x.id!==r.id)}))
+    }));
+
+    const navDefs=[
+      ['home','Home · Indicadores',''],
+      ['costos','Costos fijos y variables',''],
+      ['consultas','Consultas retroactivas',''],
+      ['alta','Alta de gastos',''],
+      ['config','Configuraciones',''],
+      ['inversiones','Inversiones','PRÓXIMAMENTE']
+    ];
+    const navItems=navDefs.map(([id,label,badge])=>({
+      label, badge,
+      go:this.go(id),
+      style:'display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; text-align:left; cursor:pointer; padding:12px 20px; border:0; border-left:4px solid '+(st.screen===id?'var(--color-accent)':'transparent')+'; background:'+(st.screen===id?'var(--color-accent-100)':'transparent')+'; color:'+(st.screen===id?'var(--color-accent-700)':'var(--color-text)')
+    }));
+
+    const segOn='background:var(--color-accent); color:#fff; cursor:pointer; padding:8px 16px; border:2px solid var(--color-accent); font-family:var(--font-heading); font-weight:800; font-size:12px';
+    const segOff='background:transparent; color:var(--color-text); cursor:pointer; padding:8px 16px; border:2px solid var(--color-divider); font-family:var(--font-heading); font-weight:800; font-size:12px';
+
+    const stubs={
+      consultas:['Consultas y actualizaciones retroactivas','Búsqueda por MES_ABONO desde/hasta, canal, tipo de gasto y categorías, con exportación .xlsx, importación de correcciones, validación previa e historial de actualizaciones masivas. Especificado en la sección 4, fuera del alcance de este prototipo.'],
+      config:['Configuraciones · maestros','Administración de alta, baja y edición sobre CAT_CATEGORIA, CAT_TARJETA, CAT_CUENTA, CAT_TIPO_GASTO, CAT_CANAL, CAT_MES, CAT_COTIZACION_DOLAR y CAT_INGRESOS.'],
+      inversiones:['Inversiones · Próximamente','Módulo pendiente de definición funcional, documentado como fase futura en la especificación.']
+    };
+    const stub=stubs[st.screen]||['',''];
+
+    const kickers={home:'Home · Indicadores', costos:'Reportes', consultas:'Reportes', alta:'Operación diaria', config:'Administración', inversiones:'Módulo'};
+    const hour=new Date().getHours();
+    const greeting=(st.screen==='home')
+      ? ((hour<13?'Buenos días':hour<20?'Buenas tardes':'Buenas noches')+', Lisandro')
+      : ({costos:'Costos fijos y variables', consultas:'Consultas retroactivas', alta:'Alta de gastos', config:'Configuraciones', inversiones:'Inversiones'}[st.screen]);
+
+    return {
+      navItems, screenKicker:kickers[st.screen], greeting,
+      todayLabel:'Sábado 12/09/2026', todayShort:'12/09/2026', sessionLeft:st.sessionLeft,
+      isHome:st.screen==='home', isCostos:st.screen==='costos', isAlta:st.screen==='alta',
+      isStub:['consultas','config','inversiones'].indexOf(st.screen)>=0,
+      stubTitle:stub[0], stubText:stub[1],
+      refresh:()=>this.flash('Datos actualizados desde D1 · '+new Date().toLocaleTimeString('es-AR')),
+      goConfig:this.go('config'),
+      askLogout:()=>this.setState({dialog:{title:'¿Cerrar sesión?', body:'Se cerrará la sesión de lgiancare. Los cambios sin confirmar se descartan.', ok:'Cerrar sesión', action:()=>{this.setState({dialog:null}); this.flash('Sesión cerrada');}}}),
+
+      nextPeriods, vencRows,
+      gaugeSegs, gaugeTicks, needle, variationLabel, variationNote,
+
+      allPeriods:['Junio 2026','Julio 2026','Agosto 2026','Septiembre 2026'].map(l=>({label:l})),
+      expPeriod:st.expPeriod, expCanal:st.expCanal,
+      setExpPeriod:this.field('expPeriod'), setExpCanal:this.field('expCanal'),
+      exportXlsx:()=>this.flash('Generando resumen_'+st.expPeriod.replace(' ','_')+'_'+st.expCanal+'.xlsx en ARS'),
+
+      currency:cur, isArs:cur==='ARS', isUsd:cur==='USD',
+      arsStyle:cur==='ARS'?segOn:segOff, usdStyle:cur==='USD'?segOn:segOff,
+      setArs:()=>this.setState({currency:'ARS'}), setUsd:()=>this.setState({currency:'USD'}),
+      catChips:this.cats().map(c=>({
+        label:c, toggle:()=>this.setState(s=>({offCats:Object.assign({},s.offCats,{[c]:!s.offCats[c]})})),
+        style:'cursor:pointer; font-size:11px; padding:5px 12px; border-radius:999px; border:1px solid '+(st.offCats[c]?'var(--color-neutral-400)':'var(--color-accent)')+'; background:'+(st.offCats[c]?'transparent':'var(--color-accent-200)')+'; color:'+(st.offCats[c]?'var(--color-neutral-600)':'var(--color-accent-700)')+'; font-family:var(--font-heading); font-weight:800; letter-spacing:0.02em'
+      })),
+      chanChart, typeChart, fixedChart, shareChart, varChart,
+
+      altaTab:st.altaTab, isVariable:st.altaTab==='variable', isFijo:st.altaTab==='fijo',
+      tabVariable:()=>this.setState({altaTab:'variable'}), tabFijo:()=>this.setState({altaTab:'fijo'}),
+      tabVarStyle:st.altaTab==='variable'?segOn:segOff, tabFijoStyle:st.altaTab==='fijo'?segOn:segOff,
+      showBanner:this.props.showDollarBanner !== false,
+      dolarVenta:'$ '+st.dolarVenta.toLocaleString('es-AR'), dolarFecha:st.dolarFecha,
+      updateDolar:()=>{ this.setState({dolarVenta:1548, dolarFecha:'12/09/2026'}); this.flash('GET dolarapi.com/v1/dolares/oficial · venta 1.548'); },
+
+      categorias:this.cats().map(c=>({label:c})),
+      tarjetas:tarjetas.map(t=>({label:t})),
+      cuentas:['Cta Cte Banco Macro','Mercado Pago','Uala'].map(c=>({label:c})),
+      altaPeriods:periodSeq.slice(0,6).map(l=>({label:l})),
+      vCanal:st.vCanal, vCat:st.vCat, vTarjeta:st.vTarjeta, vCuenta:st.vCuenta, vDetalle:st.vDetalle,
+      vImporte:st.vImporte, vCotiz:st.vCotiz, vMes:st.vMes,
+      isTarjeta:st.vCanal==='Tarjeta', isTransferencia:st.vCanal!=='Tarjeta',
+      setVCanal:this.field('vCanal'), setVCat:this.field('vCat'), setVTarjeta:this.field('vTarjeta'),
+      setVCuenta:this.field('vCuenta'), setVDetalle:this.field('vDetalle'), setVImporte:this.field('vImporte'),
+      setVCotiz:this.field('vCotiz'), setVMes:this.field('vMes'),
+      enCuotas:st.enCuotas, toggleCuotas:()=>this.setState(s=>({enCuotas:!s.enCuotas})),
+      cuotasToggleLabel:st.enCuotas?'Quitar cuotas':'Cargar en cuotas',
+      vCuotas:st.vCuotas, vCuotaImporte:st.vCuotaImporte, vCuotaInicio:st.vCuotaInicio,
+      setVCuotas:this.field('vCuotas'), setVCuotaImporte:this.field('vCuotaImporte'), setVCuotaInicio:this.field('vCuotaInicio'),
+      cuotasNote:'Se replican '+nCuotas+' registros en GASTOS_TARJETA, uno por cuota, con su MES_ABONO correlativo desde '+st.vCuotaInicio+'.',
+      previewRows,
+      saveHint:'La cotización ingresada se registra en CAT_COTIZACION_USD con fecha de carga y período.',
+      saveVariable:()=>{
+        if (!st.vDetalle || (!imp && !(st.enCuotas && cuotaImp))) { this.flash('Completá detalle e importe antes de guardar.'); return; }
+        this.flash(previewRows.length+' registro(s) impactados en '+tabla+' · ID_GASTO autogenerado');
+        this.setState({vDetalle:'', vImporte:'', vCuotaImporte:''});
+      },
+
+      loteMes:st.loteMes, setLoteMes:this.field('loteMes'), lastClosed:'Agosto 2026',
+      fixedRows, fixedCount:st.fixedRows.length, fixedTotal:this.money(fixedTotalN,'ARS'),
+      addFixedRow:()=>this.setState(s=>({
+        nextId:s.nextId+1,
+        fixedRows:s.fixedRows.concat([{id:s.nextId, concepto:'', categoria:'Otros', canal:'Transferencia', tarjeta:'Visa Macro', cuenta:'Cta Cte Banco Macro', importe:''}])
+      })),
+      loteHint:'Al confirmar se dan de alta los registros completos para '+st.loteMes+'.',
+      confirmLote:()=>this.setState({dialog:{title:'Confirmar lote de costos fijos', body:st.fixedRows.length+' registros por '+this.money(fixedTotalN,'ARS')+' se darán de alta con MES_ABONO '+st.loteMes+'.', ok:'Confirmar lote', action:()=>{this.setState({dialog:null}); this.flash('Lote confirmado · '+st.fixedRows.length+' registros en '+st.loteMes);}}}),
+
+      dialogOpen:!!st.dialog, dialogTitle:st.dialog&&st.dialog.title, dialogBody:st.dialog&&st.dialog.body,
+      dialogOk:st.dialog&&st.dialog.ok, dialogConfirm:st.dialog?st.dialog.action:()=>{},
+      closeDialog:()=>this.setState({dialog:null}),
+      toast:st.toast
+    };
+  }
+
+  updRow(id, key, value){
+    this.setState(s=>({fixedRows:s.fixedRows.map(r=>r.id===id?Object.assign({},r,{[key]:value}):r)}));
+  }
+}
+</script>
+</body>
+</html>
