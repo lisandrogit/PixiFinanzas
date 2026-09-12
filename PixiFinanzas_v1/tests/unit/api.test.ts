@@ -204,6 +204,15 @@ describe('consultas retroactivas', () => {
     expect(body.rows.every((r: any) => r.TABLA === 'GASTOS_TARJETA')).toBe(true);
   });
 
+  it('seeds FECHA_CARGA as a real date string, not an unquoted arithmetic expression', async () => {
+    // Regression check: build-seed.mjs once emitted FECHA_CARGA unquoted (e.g. 2024-09-01),
+    // which SQLite silently evaluated as 2024 - 9 - 1 = 2014 instead of storing the date.
+    const row = await env.DB.prepare(
+      "SELECT FECHA_CARGA FROM GASTOS_TARJETA WHERE DETALLE = 'Gastos Colo' AND ID_MES_ABONO = 202409"
+    ).first<{ FECHA_CARGA: string }>();
+    expect(row?.FECHA_CARGA).toBe('2024-09-01');
+  });
+
   it('blocks the whole import and logs an error entry when a row has an unknown category', async () => {
     const { cookie } = await login(app, env);
     const res = await req('/api/consultas/importar', {

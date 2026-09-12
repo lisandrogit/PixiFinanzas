@@ -95,7 +95,7 @@ function insertGastos(tableName, extraCols) {
     const detalle = row[idx[1]];
     const vals = cols.map((c, i) => {
       const raw = row[idx[i]];
-      if (c === 'DETALLE' || c === 'MONEDA') return sqlStr(raw);
+      if (c === 'DETALLE' || c === 'MONEDA' || c === 'FECHA_CARGA') return sqlStr(raw);
       if (raw === 'NaN') {
         if (c === 'ID_CATEGORIA') return NAN_CATEGORIA_BY_DETALLE[detalle.trim()] ?? 8;
         return NAN_FALLBACK_ID; // ID_TARJETA / ID_CUENTA
