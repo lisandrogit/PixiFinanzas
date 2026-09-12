@@ -9,6 +9,14 @@ import * as Q from './queries';
 type Vars = { user: SessionClaims | null };
 const app = new Hono<{ Bindings: Env; Variables: Vars }>();
 
+// Surfaces the actual error instead of Cloudflare's opaque plain-text 500 —
+// this is a small personal-use app, so returning the message is an
+// acceptable tradeoff for being able to diagnose production failures.
+app.onError((err, c) => {
+  console.error(err);
+  return c.json({ error: 'Error interno', message: err.message, stack: err.stack }, 500);
+});
+
 const COOKIE_NAME = 'px_session';
 
 app.use('*', async (c, next) => {
