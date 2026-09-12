@@ -51,16 +51,24 @@ Todo lo anterior corrió en limpio antes de este commit (28/28 unit + 10/10 e2e 
 
 ## Deploy a Cloudflare
 
-Este entorno solo tiene acceso a GitHub, no a una cuenta de Cloudflare — el deploy de este
-commit fue únicamente a GitHub. Para conectar Cloudflare Pages (según `README-handoff.md`):
+El proyecto Pages ya está creado y conectado a este repo de GitHub (deploy automático en cada
+push, sin GitHub Actions). Ya hecho vía la integración de Cloudflare de esta sesión:
 
-1. `wrangler login`, `wrangler d1 create pixifinanzas`, pegar el `database_id` real en
-   `wrangler.toml` (hoy tiene un placeholder).
-2. `wrangler d1 migrations apply pixifinanzas --remote`.
-3. `wrangler pages secret put JWT_SECRET` y `wrangler pages secret put PASSWORD_PEPPER`.
-4. Conectar el repo de GitHub en el dashboard de Cloudflare Pages (build command `npm run
-   build`, output `dist`) — cada `git push` a la rama configurada dispara build + deploy
-   automático, sin GitHub Actions (según quedó validado en `chats/chat1.md`).
+- ✅ D1 `pixifinanzas` creada (`database_id` real ya está en `wrangler.toml`).
+- ✅ Esquema + seed completo aplicado en la base remota (catálogos, ~840 gastos históricos,
+  usuario inicial) — verificado por consulta directa, incluye la corrección de `FECHA_CARGA`.
+
+Pendiente — esta sesión no tiene acceso al dashboard de Pages ni a `wrangler pages secret`,
+así que lo siguiente lo tenés que hacer vos:
+
+1. En el proyecto Pages → **Settings → Functions → D1 database bindings** → agregar binding
+   `DB` → base `pixifinanzas`. (Si Pages ya levantó el `[[d1_databases]]` de `wrangler.toml`
+   solo, este paso puede no hacer falta — probá primero sin tocar nada.)
+2. `wrangler pages secret put JWT_SECRET --project-name=pixifinanzas` y
+   `wrangler pages secret put PASSWORD_PEPPER --project-name=pixifinanzas` (o por el dashboard,
+   Settings → Environment variables → Secret).
+3. Redeploy (push cualquier commit, o "Retry deployment") y probar login con
+   `lgiancare` / `Li$aClo91`.
 
 ## Decisiones sobre pendientes del modelo (`README-handoff.md` §2)
 

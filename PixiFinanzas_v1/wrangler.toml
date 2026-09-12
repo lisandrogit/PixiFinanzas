@@ -5,7 +5,7 @@ pages_build_output_dir = "dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "pixifinanzas"
-database_id = "REPLACE_WITH_REAL_D1_ID"
+database_id = "bfb88b15-f6ae-4560-85e6-11a3c416be48"
 
 [vars]
 SESSION_TIMEOUT_MIN = "60"
