@@ -1,0 +1,99 @@
+import React from 'react';
+import ReactECharts from 'echarts-for-react';
+
+const FONT = 'Roboto, system-ui, sans-serif';
+const AXIS = { fontFamily: FONT, fontSize: 10, color: '#7d7979' };
+const GRID_LINE = { lineStyle: { color: '#e2dfdf' } };
+
+const baseGrid = { left: 56, right: 20, top: 24, bottom: 28 };
+
+function moneyShort(v: number) {
+  if (Math.abs(v) >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(v) >= 1_000) return `$${(v / 1_000).toFixed(0)}k`;
+  return `$${v.toFixed(0)}`;
+}
+
+export function LineComboChart({ labels, series, height = 260 }: {
+  labels: string[];
+  series: { name: string; data: number[]; color: string; area?: boolean; dashed?: boolean }[];
+  height?: number;
+}) {
+  const option = {
+    textStyle: { fontFamily: FONT },
+    grid: baseGrid,
+    tooltip: { trigger: 'axis', textStyle: { fontFamily: FONT } },
+    legend: { bottom: 0, textStyle: { fontFamily: FONT, fontSize: 11 } },
+    xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: '#d7d3d3' } }, axisLabel: AXIS, axisTick: { show: false } },
+    yAxis: { type: 'value', splitLine: GRID_LINE, axisLabel: { ...AXIS, formatter: moneyShort } },
+    series: series.map((s) => ({
+      name: s.name, type: 'line', data: s.data, smooth: 0.25, symbol: 'circle', symbolSize: 6,
+      lineStyle: { width: s.dashed ? 2 : 2.5, color: s.color, type: s.dashed ? 'dashed' : 'solid' },
+      itemStyle: { color: s.color },
+      areaStyle: s.area ? { color: s.color, opacity: 0.12 } : undefined,
+    })),
+  };
+  return <ReactECharts option={option} style={{ height }} notMerge />;
+}
+
+export function BarComboChart({ labels, groups, totalLine, height = 260 }: {
+  labels: string[];
+  groups: { name: string; data: number[]; color: string }[];
+  totalLine?: number[];
+  height?: number;
+}) {
+  const series: any[] = groups.map((g) => ({
+    name: g.name, type: 'bar', data: g.data, itemStyle: { color: g.color, borderRadius: [3, 3, 0, 0] }, barMaxWidth: 18,
+  }));
+  if (totalLine) {
+    series.push({ name: 'Total', type: 'line', data: totalLine, lineStyle: { color: '#201e1d', width: 2, type: 'dashed' }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#201e1d' } });
+  }
+  const option = {
+    textStyle: { fontFamily: FONT },
+    grid: baseGrid,
+    tooltip: { trigger: 'axis', textStyle: { fontFamily: FONT } },
+    legend: { bottom: 0, textStyle: { fontFamily: FONT, fontSize: 11 } },
+    xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: '#d7d3d3' } }, axisLabel: AXIS, axisTick: { show: false } },
+    yAxis: { type: 'value', splitLine: GRID_LINE, axisLabel: { ...AXIS, formatter: moneyShort } },
+    series,
+  };
+  return <ReactECharts option={option} style={{ height }} notMerge />;
+}
+
+export function BarLineChart({ labels, bars, line, height = 260, lineFormatter }: {
+  labels: string[]; bars: number[]; line?: number[]; height?: number; lineFormatter?: (v: number) => string;
+}) {
+  const option = {
+    textStyle: { fontFamily: FONT },
+    grid: baseGrid,
+    tooltip: { trigger: 'axis', textStyle: { fontFamily: FONT } },
+    xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: '#d7d3d3' } }, axisLabel: { ...AXIS, fontSize: 9 }, axisTick: { show: false } },
+    yAxis: { type: 'value', splitLine: GRID_LINE, axisLabel: { ...AXIS, formatter: lineFormatter || moneyShort } },
+    series: [
+      { type: 'bar', data: bars, itemStyle: { color: '#1565d8', borderRadius: [3, 3, 0, 0] }, barMaxWidth: 20 },
+      ...(line ? [{ type: 'line', data: line, lineStyle: { color: '#201e1d', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#201e1d' } }] : []),
+    ],
+  };
+  return <ReactECharts option={option} style={{ height }} notMerge />;
+}
+
+const GAUGE_COLORS: [number, string][] = [
+  [0.2, '#16794f'], [0.4, '#5fae73'], [0.6, '#e0b02c'], [0.8, '#e07a3c'], [1, '#c9372a'],
+];
+
+export function SaludGauge({ variacionPct, height = 220 }: { variacionPct: number; height?: number }) {
+  const clamped = Math.max(-30, Math.min(30, variacionPct));
+  const option = {
+    series: [{
+      type: 'gauge',
+      startAngle: 180, endAngle: 0, min: -30, max: 30,
+      radius: '100%', center: ['50%', '78%'],
+      axisLine: { lineStyle: { width: 22, color: GAUGE_COLORS } },
+      pointer: { itemStyle: { color: '#201e1d' }, width: 5, length: '55%' },
+      axisTick: { show: false }, splitLine: { length: 10, lineStyle: { color: '#fff', width: 2 } },
+      axisLabel: { fontFamily: FONT, fontSize: 10, color: '#605d5d', distance: -34 },
+      detail: { show: false },
+      data: [{ value: clamped }],
+    }],
+  };
+  return <ReactECharts option={option} style={{ height }} notMerge />;
+}
