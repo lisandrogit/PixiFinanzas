@@ -100,6 +100,26 @@ describe('home', () => {
     expect(body.sinDatosProximos).toBe(true);
   });
 
+  it('salud financiera ignores fixed costs and only reacts to variable ones', async () => {
+    const { cookie } = await login(app, env);
+    // A fixed cost landing in a next period shouldn't count — sinDatosProximos stays true.
+    await env.DB.prepare(
+      `INSERT INTO GASTOS_TRANSFERENCIA (FECHA_CARGA, DETALLE, ID_CATEGORIA, ID_CUENTA, ID_TIPO_GASTO, ID_CANAL, ID_MES_ABONO, IMPORTE, MONEDA, IMPORTE_USD)
+       VALUES ('2026-10-01', 'Alquiler', 9, 1, 1, 2, 202610, 500000, 'ARS', 350)`
+    ).run();
+    const fixedOnly = await (await req('/api/home/salud', {}, cookie)).json();
+    expect(fixedOnly.sinDatosProximos).toBe(true);
+
+    // A variable cost in the same period should be picked up.
+    await env.DB.prepare(
+      `INSERT INTO GASTOS_TRANSFERENCIA (FECHA_CARGA, DETALLE, ID_CATEGORIA, ID_CUENTA, ID_TIPO_GASTO, ID_CANAL, ID_MES_ABONO, IMPORTE, MONEDA, IMPORTE_USD)
+       VALUES ('2026-10-01', 'Salida', 5, 1, 2, 2, 202610, 20000, 'ARS', 14)`
+    ).run();
+    const withVariable = await (await req('/api/home/salud', {}, cookie)).json();
+    expect(withVariable.sinDatosProximos).toBe(false);
+    expect(withVariable.avgNext).toBeCloseTo(20000 / 3, 1);
+  });
+
   it('returns 9 months of combined channel and type summaries', async () => {
     const { cookie } = await login(app, env);
     const canal = await (await req('/api/home/resumen-canal', {}, cookie)).json();
@@ -128,6 +148,12 @@ describe('costos fijos y variables', () => {
     const body = await (await req('/api/costos/variables?moneda=ARS', {}, cookie)).json();
     expect(body.categorias.length).toBeLessThanOrEqual(5);
     expect(body.periods).toHaveLength(9);
+  });
+
+  it('variables: honors a categorias filter, restricting which categories can appear', async () => {
+    const { cookie } = await login(app, env);
+    const body = await (await req('/api/costos/variables?moneda=ARS&categorias=9', {}, cookie)).json();
+    expect(body.categorias.every((c: any) => c.categoria === 'Hogar')).toBe(true);
   });
 });
 

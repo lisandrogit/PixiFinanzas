@@ -108,20 +108,23 @@ export async function participacionFijosSobreIngresos(env: Env) {
   });
 }
 
-export async function costosVariablesTop5(env: Env, currency: 'ARS' | 'USD') {
+export async function costosVariablesTop5(env: Env, currency: 'ARS' | 'USD', categorias: number[] | null) {
   const cur = currentPeriod();
   const periods = lastClosedPeriods(cur, 9);
   const placeholders = periods.map(() => '?').join(',');
   const col = currency === 'USD' ? 'IMPORTE_USD' : 'IMPORTE';
+  const catClause = categorias && categorias.length ? `AND ID_CATEGORIA IN (${categorias.map(() => '?').join(',')})` : '';
+  const args: unknown[] = [...periods];
+  if (categorias && categorias.length) args.push(...categorias);
   const sql = (vista: string) => `
     SELECT CATEGORIA as categoria, MES_ABONO as mes, SUM(${col}) as total
     FROM ${vista}
-    WHERE MES_ABONO IN (${placeholders}) AND TIPO_GASTO = 'COSTO VARIABLE'
+    WHERE MES_ABONO IN (${placeholders}) AND TIPO_GASTO = 'COSTO VARIABLE' ${catClause}
     GROUP BY CATEGORIA, MES_ABONO
   `;
   const [tar, tra] = await Promise.all([
-    env.DB.prepare(sql('VISTA_GASTOS_TARJETA')).bind(...periods).all<{ categoria: string; mes: number; total: number }>(),
-    env.DB.prepare(sql('VISTA_GASTOS_TRANSFERENCIA')).bind(...periods).all<{ categoria: string; mes: number; total: number }>(),
+    env.DB.prepare(sql('VISTA_GASTOS_TARJETA')).bind(...args).all<{ categoria: string; mes: number; total: number }>(),
+    env.DB.prepare(sql('VISTA_GASTOS_TRANSFERENCIA')).bind(...args).all<{ categoria: string; mes: number; total: number }>(),
   ]);
   const byCat = new Map<string, Map<number, number>>();
   for (const row of [...tar.results, ...tra.results]) {
@@ -188,7 +191,9 @@ export async function saludFinanciera(env: Env) {
   const cur = currentPeriod();
   const closed = lastClosedPeriods(cur, 3);
   const next = nextPeriods(cur, 3);
-  const totals = await sumByMonth(env, [...closed, ...next], null, null);
+  // Solo costos variables: los fijos (alquiler, suscripciones, etc.) no
+  // reflejan cambios en el hábito de gasto, así que no deberían mover la aguja.
+  const totals = await sumByMonth(env, [...closed, ...next], null, 'COSTO VARIABLE');
   const avgClosed = closed.reduce((s, p) => s + totals.get(p)!.ars, 0) / 3;
   const avgNext = next.reduce((s, p) => s + totals.get(p)!.ars, 0) / 3;
   const variacion = avgClosed > 0 ? ((avgNext - avgClosed) / avgClosed) * 100 : 0;

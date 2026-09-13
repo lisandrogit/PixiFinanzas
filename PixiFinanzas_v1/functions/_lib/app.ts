@@ -134,7 +134,8 @@ app.get('/api/costos/fijos', async (c) => c.json(await Q.costosFijos(c.env)));
 app.get('/api/costos/participacion', async (c) => c.json(await Q.participacionFijosSobreIngresos(c.env)));
 app.get('/api/costos/variables', async (c) => {
   const currency = (c.req.query('moneda') === 'USD' ? 'USD' : 'ARS') as 'ARS' | 'USD';
-  return c.json(await Q.costosVariablesTop5(c.env, currency));
+  const categorias = parseCategorias(c.req.query('categorias'));
+  return c.json(await Q.costosVariablesTop5(c.env, currency, categorias));
 });
 
 // ── Consultas retroactivas ────────────────────────────────────────────────
