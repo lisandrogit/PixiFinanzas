@@ -87,6 +87,9 @@ describe('home', () => {
     expect(body.periods.map((p: any) => p.label)).toEqual(['Octubre 2026', 'Noviembre 2026', 'Diciembre 2026']);
     expect(body.tarjetas.length).toBeGreaterThan(0);
     expect(body.totalPeriodo).toHaveLength(3);
+    // The seed has no gastos loaded yet for future periods (real historical
+    // data, not projections) — sinDatos flags that for the frontend's empty state.
+    expect(body.sinDatos).toBe(true);
   });
 
   it('computes the salud financiera variation between closed and next periods', async () => {
@@ -94,6 +97,7 @@ describe('home', () => {
     const body = await (await req('/api/home/salud', {}, cookie)).json();
     expect(typeof body.variacionPct).toBe('number');
     expect(body.avgClosed).toBeGreaterThanOrEqual(0);
+    expect(body.sinDatosProximos).toBe(true);
   });
 
   it('returns 9 months of combined channel and type summaries', async () => {

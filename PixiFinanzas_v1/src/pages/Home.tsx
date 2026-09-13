@@ -10,8 +10,9 @@ interface Vencimientos {
   totalTarjeta: number[];
   transferencia: number[];
   totalPeriodo: number[];
+  sinDatos: boolean;
 }
-interface Salud { avgClosed: number; avgNext: number; variacionPct: number }
+interface Salud { avgClosed: number; avgNext: number; variacionPct: number; sinDatosProximos: boolean }
 interface CanalRow { mes: number; label: string; tarjetaArs: number; transferenciaArs: number; ars: number }
 interface TipoRow { mes: number; label: string; fijoArs: number; variableArs: number; fijoUsd: number; variableUsd: number }
 interface Categoria { ID_CATEGORIA: number; ETIQUETA: string; ACTIVO: number }
@@ -126,22 +127,42 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
               </tbody>
             </table>
           )}
-          <div className="flex items-center gap-2.5 mt-3">
-            <span className="text-[10px] tracking-wide uppercase text-neutral-700">Menor</span>
-            <span style={{ flex: 1, maxWidth: 180, height: 8, borderRadius: 999, background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 8%, #fff), color-mix(in srgb, var(--color-accent) 54%, #fff), var(--color-accent-700))' }} />
-            <span className="text-[10px] tracking-wide uppercase text-neutral-700">Mayor por período</span>
-          </div>
+          {venc?.sinDatos ? (
+            <span className="note mt-3 block max-w-[420px]">
+              Todavía no hay gastos cargados para estos períodos. Los vencimientos aparecen acá a
+              medida que cargás gastos fijos por lote o gastos en cuotas desde "Alta de Gastos".
+            </span>
+          ) : (
+            <div className="flex items-center gap-2.5 mt-3">
+              <span className="text-[10px] tracking-wide uppercase text-neutral-700">Menor</span>
+              <span style={{ flex: 1, maxWidth: 180, height: 8, borderRadius: 999, background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 8%, #fff), color-mix(in srgb, var(--color-accent) 54%, #fff), var(--color-accent-700))' }} />
+              <span className="text-[10px] tracking-wide uppercase text-neutral-700">Mayor por período</span>
+            </div>
+          )}
         </section>
 
         <section className="flex flex-col">
           <h6 className="m-0 mb-3 text-[13px] tracking-wide uppercase">Salud financiera</h6>
           <div className="flex-1 flex flex-col items-start justify-between p-4" style={{ border: '2px solid var(--color-divider)' }}>
-            {salud && <SaludGauge variacionPct={salud.variacionPct} />}
-            <div className="flex items-baseline gap-2.5 mt-1.5">
-              <span className="font-extrabold text-[34px] leading-none">{salud ? `${salud.variacionPct >= 0 ? '+' : ''}${salud.variacionPct.toFixed(1)}%` : '—'}</span>
-              <span className="text-xs text-neutral-700 max-w-[200px]">vs. promedio de los 3 períodos cerrados</span>
-            </div>
-            <span className="note mt-2.5">Promedio 3 períodos cerrados vs. próximos 3</span>
+            {salud && !salud.sinDatosProximos && <SaludGauge variacionPct={salud.variacionPct} />}
+            {salud?.sinDatosProximos ? (
+              <>
+                <span className="font-extrabold text-[22px] leading-tight">Sin datos aún</span>
+                <span className="note mt-2.5">
+                  Todavía no hay gastos cargados para los próximos 3 períodos, así que no se puede
+                  calcular la variación. Cargá los gastos fijos del próximo mes desde "Alta de Gastos"
+                  para ver este indicador.
+                </span>
+              </>
+            ) : (
+              <>
+                <div className="flex items-baseline gap-2.5 mt-1.5">
+                  <span className="font-extrabold text-[34px] leading-none">{salud ? `${salud.variacionPct >= 0 ? '+' : ''}${salud.variacionPct.toFixed(1)}%` : '—'}</span>
+                  <span className="text-xs text-neutral-700 max-w-[200px]">vs. promedio de los 3 períodos cerrados</span>
+                </div>
+                <span className="note mt-2.5">Promedio 3 períodos cerrados vs. próximos 3</span>
+              </>
+            )}
           </div>
         </section>
       </div>

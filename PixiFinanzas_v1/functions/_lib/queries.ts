@@ -165,6 +165,9 @@ export async function vencimientos(env: Env) {
   const transferMap = new Map(periods.map((p) => [p, 0]));
   for (const row of porTransferencia.results) transferMap.set(row.mes, row.total);
 
+  const totalPeriodo = periods.map((p) =>
+    [...byTarjeta.values()].reduce((s, m) => s + (m.get(p) || 0), 0) + (transferMap.get(p) || 0)
+  );
   return {
     periods: periods.map((p) => ({ mes: p, label: periodLabel(p) })),
     tarjetas: [...byTarjeta.entries()].map(([tarjeta, m]) => ({
@@ -172,9 +175,12 @@ export async function vencimientos(env: Env) {
     })),
     totalTarjeta: periods.map((p) => [...byTarjeta.values()].reduce((s, m) => s + (m.get(p) || 0), 0)),
     transferencia: periods.map((p) => transferMap.get(p) || 0),
-    totalPeriodo: periods.map((p) =>
-      [...byTarjeta.values()].reduce((s, m) => s + (m.get(p) || 0), 0) + (transferMap.get(p) || 0)
-    ),
+    totalPeriodo,
+    // Todos los períodos futuros en $0 significa que todavía no se cargó ningún
+    // gasto para esos meses (fijo por lote, o cuotas ya comprometidas) — no que
+    // el cálculo esté mal. El frontend usa esto para mostrar un estado vacío
+    // explicativo en vez de una grilla de $0,00 que parece un error.
+    sinDatos: totalPeriodo.every((v) => v === 0),
   };
 }
 
@@ -186,5 +192,7 @@ export async function saludFinanciera(env: Env) {
   const avgClosed = closed.reduce((s, p) => s + totals.get(p)!.ars, 0) / 3;
   const avgNext = next.reduce((s, p) => s + totals.get(p)!.ars, 0) / 3;
   const variacion = avgClosed > 0 ? ((avgNext - avgClosed) / avgClosed) * 100 : 0;
-  return { avgClosed, avgNext, variacionPct: variacion };
+  // avgNext === 0 casi siempre significa "todavía no hay gastos cargados para
+  // los próximos períodos", no una caída real del 100% del gasto.
+  return { avgClosed, avgNext, variacionPct: variacion, sinDatosProximos: avgNext === 0 };
 }

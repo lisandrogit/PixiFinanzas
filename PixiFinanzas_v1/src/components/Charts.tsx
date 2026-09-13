@@ -6,6 +6,10 @@ const AXIS = { fontFamily: FONT, fontSize: 10, color: '#7d7979' };
 const GRID_LINE = { lineStyle: { color: '#e2dfdf' } };
 
 const baseGrid = { left: 56, right: 20, top: 24, bottom: 28 };
+// Charts with a legend need extra bottom room so the legend row doesn't sit
+// on top of the x-axis labels — ECharts positions both independently of one
+// another, they don't reflow to avoid each other.
+const legendGrid = { left: 56, right: 20, top: 24, bottom: 60 };
 
 function moneyShort(v: number) {
   if (Math.abs(v) >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
@@ -13,16 +17,16 @@ function moneyShort(v: number) {
   return `$${v.toFixed(0)}`;
 }
 
-export function LineComboChart({ labels, series, height = 260 }: {
+export function LineComboChart({ labels, series, height = 300 }: {
   labels: string[];
   series: { name: string; data: number[]; color: string; area?: boolean; dashed?: boolean }[];
   height?: number;
 }) {
   const option = {
     textStyle: { fontFamily: FONT },
-    grid: baseGrid,
+    grid: legendGrid,
     tooltip: { trigger: 'axis', textStyle: { fontFamily: FONT } },
-    legend: { bottom: 0, textStyle: { fontFamily: FONT, fontSize: 11 } },
+    legend: { bottom: 6, textStyle: { fontFamily: FONT, fontSize: 11 } },
     xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: '#d7d3d3' } }, axisLabel: AXIS, axisTick: { show: false } },
     yAxis: { type: 'value', splitLine: GRID_LINE, axisLabel: { ...AXIS, formatter: moneyShort } },
     series: series.map((s) => ({
@@ -35,7 +39,7 @@ export function LineComboChart({ labels, series, height = 260 }: {
   return <ReactECharts option={option} style={{ height }} notMerge />;
 }
 
-export function BarComboChart({ labels, groups, totalLine, height = 260 }: {
+export function BarComboChart({ labels, groups, totalLine, height = 300 }: {
   labels: string[];
   groups: { name: string; data: number[]; color: string }[];
   totalLine?: number[];
@@ -49,9 +53,9 @@ export function BarComboChart({ labels, groups, totalLine, height = 260 }: {
   }
   const option = {
     textStyle: { fontFamily: FONT },
-    grid: baseGrid,
+    grid: legendGrid,
     tooltip: { trigger: 'axis', textStyle: { fontFamily: FONT } },
-    legend: { bottom: 0, textStyle: { fontFamily: FONT, fontSize: 11 } },
+    legend: { bottom: 6, textStyle: { fontFamily: FONT, fontSize: 11 } },
     xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: '#d7d3d3' } }, axisLabel: AXIS, axisTick: { show: false } },
     yAxis: { type: 'value', splitLine: GRID_LINE, axisLabel: { ...AXIS, formatter: moneyShort } },
     series,
