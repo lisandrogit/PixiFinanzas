@@ -99,5 +99,8 @@ export function SaludGauge({ variacionPct, height = 220 }: { variacionPct: numbe
       data: [{ value: clamped }],
     }],
   };
-  return <ReactECharts option={option} style={{ height }} notMerge />;
+  // Its flex parent uses items-start (so the pill below it hugs its own content
+  // instead of stretching), which leaves this chart's own width unconstrained —
+  // w-full forces it to fill the row regardless of the parent's cross-axis alignment.
+  return <ReactECharts option={option} style={{ height }} notMerge className="w-full" />;
 }

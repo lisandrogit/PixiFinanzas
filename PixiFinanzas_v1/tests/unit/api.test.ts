@@ -120,6 +120,20 @@ describe('home', () => {
     expect(withVariable.avgNext).toBeCloseTo(20000 / 3, 1);
   });
 
+  it('salud financiera counts the current in-progress period as part of the 3 closed periods', async () => {
+    const { cookie } = await login(app, env);
+    const before = await (await req('/api/home/salud', {}, cookie)).json();
+    // ID_MES_ABONO 202609 is the current period (server "today" is 2026-09-13);
+    // it must be included in the "3 closed periods" average, not excluded as if
+    // still open.
+    await env.DB.prepare(
+      `INSERT INTO GASTOS_TRANSFERENCIA (FECHA_CARGA, DETALLE, ID_CATEGORIA, ID_CUENTA, ID_TIPO_GASTO, ID_CANAL, ID_MES_ABONO, IMPORTE, MONEDA, IMPORTE_USD)
+       VALUES ('2026-09-13', 'Test mes en curso', 5, 1, 2, 2, 202609, 300000, 'ARS', 200)`
+    ).run();
+    const after = await (await req('/api/home/salud', {}, cookie)).json();
+    expect(after.avgClosed).toBeCloseTo(before.avgClosed + 100000, 1);
+  });
+
   it('returns 9 months of combined channel and type summaries', async () => {
     const { cookie } = await login(app, env);
     const canal = await (await req('/api/home/resumen-canal', {}, cookie)).json();

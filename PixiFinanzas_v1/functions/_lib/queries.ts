@@ -1,5 +1,5 @@
 import type { Env } from './types';
-import { currentPeriod, lastClosedPeriods, nextPeriods, periodLabel } from './period';
+import { currentPeriod, lastClosedPeriods, nextPeriods, periodLabel, shiftPeriod } from './period';
 
 export interface MonthTotal { mes: number; label: string; ars: number; usd: number }
 
@@ -189,7 +189,10 @@ export async function vencimientos(env: Env) {
 
 export async function saludFinanciera(env: Env) {
   const cur = currentPeriod();
-  const closed = lastClosedPeriods(cur, 3);
+  // A diferencia de otros indicadores, acá "3 períodos cerrados" incluye el
+  // período actual (mes en curso), no solo los ya cerrados: ej. si hoy es
+  // septiembre 2026, se comparan jul-ago-sep contra oct-nov-dic.
+  const closed = [shiftPeriod(cur, -2), shiftPeriod(cur, -1), cur];
   const next = nextPeriods(cur, 3);
   // Solo costos variables: los fijos (alquiler, suscripciones, etc.) no
   // reflejan cambios en el hábito de gasto, así que no deberían mover la aguja.
