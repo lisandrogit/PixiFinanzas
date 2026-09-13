@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { LineComboChart, BarLineChart } from '../components/Charts';
 
-interface FijoRow { mes: number; label: string; ars: number; usd: number }
+interface TipoRow { mes: number; label: string; fijoArs: number; variableArs: number; fijoUsd: number; variableUsd: number }
 interface ParticipacionRow { mes: number; label: string; porcentaje: number }
 interface VariablesResp { periods: { mes: number; label: string }[]; categorias: { categoria: string; valores: number[] }[] }
 interface Categoria { ID_CATEGORIA: number; ETIQUETA: string; ACTIVO: number }
@@ -11,7 +11,7 @@ const PALETTE = ['#1565d8', '#0f8f86', '#e0b02c', '#e07a3c', '#9e3526'];
 
 export default function Costos({ refreshKey }: { refreshKey: number }) {
   const [currency, setCurrency] = useState<'ARS' | 'USD'>('ARS');
-  const [fijos, setFijos] = useState<FijoRow[]>([]);
+  const [tipo, setTipo] = useState<TipoRow[]>([]);
   const [participacion, setParticipacion] = useState<ParticipacionRow[]>([]);
   const [variables, setVariables] = useState<VariablesResp | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -21,7 +21,7 @@ export default function Costos({ refreshKey }: { refreshKey: number }) {
   const catQuery = activeCats.length && activeCats.length < categorias.length ? `&categorias=${activeCats.join(',')}` : '';
 
   useEffect(() => {
-    api.get<FijoRow[]>('/costos/fijos').then(setFijos);
+    api.get<TipoRow[]>('/home/resumen-tipo').then(setTipo);
     api.get<ParticipacionRow[]>('/costos/participacion').then(setParticipacion);
     api.get<Categoria[]>('/maestros/CAT_CATEGORIA').then((cs) => setCategorias(cs.filter((c) => c.ACTIVO)));
   }, [refreshKey]);
@@ -46,10 +46,13 @@ export default function Costos({ refreshKey }: { refreshKey: number }) {
 
       <div className="grid gap-7" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(340px,1fr))' }}>
         <figure className="m-0 p-4" style={{ border: '2px solid var(--color-divider)' }}>
-          <figcaption className="text-[11px] tracking-wide uppercase text-neutral-700 mb-2.5">Detalle de costos fijos · 9 meses cerrados · {currency}</figcaption>
+          <figcaption className="text-[11px] tracking-wide uppercase text-neutral-700 mb-2.5">Detalle de costos fijos y variables · 9 meses cerrados · {currency}</figcaption>
           <LineComboChart
-            labels={fijos.map((r) => r.label.slice(0, 3))}
-            series={[{ name: 'Fijos', data: fijos.map((r) => (currency === 'USD' ? r.usd : r.ars)), color: '#1565d8', area: true }]}
+            labels={tipo.map((r) => r.label.slice(0, 3))}
+            series={[
+              { name: 'Fijos', data: tipo.map((r) => (currency === 'USD' ? r.fijoUsd : r.fijoArs)), color: '#1565d8', area: true },
+              { name: 'Variables', data: tipo.map((r) => (currency === 'USD' ? r.variableUsd : r.variableArs)), color: '#0f8f86' },
+            ]}
           />
         </figure>
         <figure className="m-0 p-4" style={{ border: '2px solid var(--color-divider)' }}>
