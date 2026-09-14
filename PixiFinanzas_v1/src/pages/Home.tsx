@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { api } from '../lib/api';
 import { useToast } from '../components/Toast';
-import { LineComboChart, BarComboChart, SaludGauge } from '../components/Charts';
+import { LineComboChart, BarComboChart, SaludGauge, V2_ACCENT, V2_ACCENT2, V2_INK } from '../components/Charts';
 
 interface Vencimientos {
   periods: { mes: number; label: string }[];
@@ -24,12 +24,6 @@ function money(v: number, currency: 'ARS' | 'USD', rate: number) {
   return prefix + val.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// Colores de la paleta v2 (Figma) para las series de los gráficos — deben
-// coincidir con tailwind.config.js `theme.extend.colors.v2`; los charts
-// reciben hex literales porque ECharts no puede consumir clases de Tailwind.
-const V2_ACCENT = '#00d4aa';
-const V2_ACCENT2 = '#5b8dee';
-const V2_INK = '#e8eaf2';
 
 export default function Home({ refreshKey }: { refreshKey: number }) {
   const toast = useToast();

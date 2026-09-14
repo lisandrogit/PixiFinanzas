@@ -14,6 +14,15 @@ const GRID_LINE_DARK = { lineStyle: { color: '#232840' } };
 const AXIS_LINE_DARK = { lineStyle: { color: '#232840' } };
 const INK_DARK = '#e8eaf2';
 
+// Hex literales de la paleta v2 (deben coincidir con tailwind.config.js
+// `theme.extend.colors.v2`) para usar como colores de series — ECharts no
+// puede consumir clases de Tailwind, así que las páginas ya migradas
+// importan estas constantes en vez de repetir los hex a mano.
+export const V2_ACCENT = '#00d4aa';
+export const V2_ACCENT2 = '#5b8dee';
+export const V2_INK = INK_DARK;
+export const V2_PALETTE = ['#00d4aa', '#5b8dee', '#f59e0b', '#ff4d6d', '#a78bfa'];
+
 const baseGrid = { left: 56, right: 20, top: 24, bottom: 28 };
 // Charts with a legend need extra bottom room so the legend row doesn't sit
 // on top of the x-axis labels — ECharts positions both independently of one
@@ -77,18 +86,20 @@ export function BarComboChart({ labels, groups, totalLine, height = 300, dark = 
   return <ReactECharts option={option} style={{ height }} notMerge />;
 }
 
-export function BarLineChart({ labels, bars, line, height = 260, lineFormatter }: {
-  labels: string[]; bars: number[]; line?: number[]; height?: number; lineFormatter?: (v: number) => string;
+export function BarLineChart({ labels, bars, line, height = 260, lineFormatter, dark = false, barColor }: {
+  labels: string[]; bars: number[]; line?: number[]; height?: number; lineFormatter?: (v: number) => string; dark?: boolean; barColor?: string;
 }) {
+  const axis = dark ? AXIS_DARK : AXIS;
+  const inkColor = dark ? INK_DARK : '#201e1d';
   const option = {
-    textStyle: { fontFamily: FONT },
+    textStyle: { fontFamily: dark ? V2_FONT : FONT },
     grid: baseGrid,
-    tooltip: { trigger: 'axis', textStyle: { fontFamily: FONT } },
-    xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: '#d7d3d3' } }, axisLabel: { ...AXIS, fontSize: 9 }, axisTick: { show: false } },
-    yAxis: { type: 'value', splitLine: GRID_LINE, axisLabel: { ...AXIS, formatter: lineFormatter || moneyShort } },
+    tooltip: { trigger: 'axis', textStyle: { fontFamily: dark ? V2_FONT : FONT } },
+    xAxis: { type: 'category', data: labels, axisLine: dark ? AXIS_LINE_DARK : { lineStyle: { color: '#d7d3d3' } }, axisLabel: { ...axis, fontSize: 9 }, axisTick: { show: false } },
+    yAxis: { type: 'value', splitLine: dark ? GRID_LINE_DARK : GRID_LINE, axisLabel: { ...axis, formatter: lineFormatter || moneyShort } },
     series: [
-      { type: 'bar', data: bars, itemStyle: { color: '#1565d8', borderRadius: [3, 3, 0, 0] }, barMaxWidth: 20 },
-      ...(line ? [{ type: 'line', data: line, lineStyle: { color: '#201e1d', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#201e1d' } }] : []),
+      { type: 'bar', data: bars, itemStyle: { color: barColor || (dark ? V2_ACCENT2 : '#1565d8'), borderRadius: [3, 3, 0, 0] }, barMaxWidth: 20 },
+      ...(line ? [{ type: 'line', data: line, lineStyle: { color: inkColor, width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: inkColor } }] : []),
     ],
   };
   return <ReactECharts option={option} style={{ height }} notMerge />;
