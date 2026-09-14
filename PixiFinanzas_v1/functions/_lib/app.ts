@@ -9,12 +9,12 @@ import * as Q from './queries';
 type Vars = { user: SessionClaims | null };
 const app = new Hono<{ Bindings: Env; Variables: Vars }>();
 
-// Surfaces the actual error instead of Cloudflare's opaque plain-text 500 —
-// this is a small personal-use app, so returning the message is an
-// acceptable tradeoff for being able to diagnose production failures.
+// El detalle del error va solo al log del server (visible en el dashboard de
+// Cloudflare / wrangler tail) — nunca al cliente, para no filtrar rutas de
+// archivo, forma de las queries u otros detalles internos.
 app.onError((err, c) => {
   console.error(err);
-  return c.json({ error: 'Error interno', message: err.message, stack: err.stack }, 500);
+  return c.json({ error: 'Error interno' }, 500);
 });
 
 const COOKIE_NAME = 'px_session';
@@ -50,6 +50,9 @@ app.use('/api/*', async (c, next) => {
 });
 
 // ── Auth ─────────────────────────────────────────────────────────────────
+const MAX_INTENTOS_FALLIDOS = 5;
+const BLOQUEO_MIN = 15;
+
 app.post('/api/auth/login', async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const schema = z.object({ usuario: z.string().min(1), clave: z.string().min(1) });
@@ -57,15 +60,37 @@ app.post('/api/auth/login', async (c) => {
   if (!parsed.success) return c.json({ error: 'Datos inválidos' }, 422);
 
   const row = await c.env.DB.prepare(
-    `SELECT u.ID_USUARIO, u.USUARIO, u.CLAVE_HASH, u.CLAVE_SALT, u.ROL, u.HABILITADO, p.NOMBRE, p.APELLIDO
+    `SELECT u.ID_USUARIO, u.USUARIO, u.CLAVE_HASH, u.CLAVE_SALT, u.ROL, u.HABILITADO, u.INTENTOS_FALLIDOS, u.BLOQUEADO_HASTA, p.NOMBRE, p.APELLIDO
      FROM USUARIOS u JOIN PERSONAS p ON p.ID_PERSONA = u.ID_PERSONA WHERE u.USUARIO = ?`
   ).bind(parsed.data.usuario).first<any>();
 
   if (!row) return c.json({ error: 'Usuario o clave incorrectos' }, 401);
+
+  // Bloqueo temporal tras varios intentos fallidos seguidos — sin esto, nada
+  // impedía probar contraseñas sin límite contra un usuario conocido.
+  if (row.BLOQUEADO_HASTA && new Date(row.BLOQUEADO_HASTA).getTime() > Date.now()) {
+    const minutos = Math.ceil((new Date(row.BLOQUEADO_HASTA).getTime() - Date.now()) / 60_000);
+    return c.json({ error: `Demasiados intentos fallidos. Probá de nuevo en ${minutos} min.` }, 429);
+  }
   if (!row.HABILITADO) return c.json({ error: 'Usuario deshabilitado' }, 403);
 
   const ok = await verifyPassword(parsed.data.clave, row.CLAVE_HASH, row.CLAVE_SALT);
-  if (!ok) return c.json({ error: 'Usuario o clave incorrectos' }, 401);
+  if (!ok) {
+    const intentos = (row.INTENTOS_FALLIDOS || 0) + 1;
+    if (intentos >= MAX_INTENTOS_FALLIDOS) {
+      const bloqueadoHasta = new Date(Date.now() + BLOQUEO_MIN * 60_000).toISOString();
+      await c.env.DB.prepare('UPDATE USUARIOS SET INTENTOS_FALLIDOS = 0, BLOQUEADO_HASTA = ? WHERE ID_USUARIO = ?')
+        .bind(bloqueadoHasta, row.ID_USUARIO).run();
+    } else {
+      await c.env.DB.prepare('UPDATE USUARIOS SET INTENTOS_FALLIDOS = ? WHERE ID_USUARIO = ?')
+        .bind(intentos, row.ID_USUARIO).run();
+    }
+    return c.json({ error: 'Usuario o clave incorrectos' }, 401);
+  }
+  if (row.INTENTOS_FALLIDOS || row.BLOQUEADO_HASTA) {
+    await c.env.DB.prepare('UPDATE USUARIOS SET INTENTOS_FALLIDOS = 0, BLOQUEADO_HASTA = NULL WHERE ID_USUARIO = ?')
+      .bind(row.ID_USUARIO).run();
+  }
 
   const timeoutMin = Number(c.env.SESSION_TIMEOUT_MIN || '60');
   const claims: SessionClaims = {
@@ -439,6 +464,9 @@ app.post('/api/cotizacion', async (c) => {
 
 // ── Usuarios ───────────────────────────────────────────────────────────────
 app.get('/api/usuarios', async (c) => {
+  const user = requireAuth(c)!;
+  // Expone DNI de todos los usuarios — dato sensible, no apto para el rol Consulta.
+  if (user.rol !== 'Rolemaster') return c.json({ error: 'Requiere rol Rolemaster' }, 403);
   const res = await c.env.DB.prepare(
     `SELECT u.ID_USUARIO, u.USUARIO, u.ROL, u.HABILITADO, p.NOMBRE, p.APELLIDO, p.DNI
      FROM USUARIOS u JOIN PERSONAS p ON p.ID_PERSONA = u.ID_PERSONA ORDER BY u.ID_USUARIO`

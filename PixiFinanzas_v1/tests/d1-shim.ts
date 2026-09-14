@@ -43,5 +43,6 @@ export function freshDb(): D1Shim {
   raw.exec(readFileSync(join(root, 'migrations', '0001_init.sql'), 'utf-8'));
   raw.exec(readFileSync(join(root, 'migrations', '0002_seed_catalogos_gastos.sql'), 'utf-8'));
   raw.exec(readFileSync(join(root, 'migrations', '0003_seed_usuario_inicial.sql'), 'utf-8'));
+  raw.exec(readFileSync(join(root, 'migrations', '0004_login_lockout.sql'), 'utf-8'));
   return new D1Shim(raw);
 }

@@ -37,6 +37,27 @@ describe('auth', () => {
     expect(res.status).toBe(401);
   });
 
+  it('locks the account out after repeated failed logins, even with the right password', async () => {
+    for (let i = 0; i < 5; i++) {
+      const { res } = await login(app, env, 'lgiancare', 'wrong-password');
+      expect(res.status).toBe(401);
+    }
+    const { res: lockedOut } = await login(app, env);
+    expect(lockedOut.status).toBe(429);
+  });
+
+  it('resets the failed-attempt counter after a successful login', async () => {
+    for (let i = 0; i < 3; i++) await login(app, env, 'lgiancare', 'wrong-password');
+    const { res: ok } = await login(app, env);
+    expect(ok.status).toBe(200);
+    for (let i = 0; i < 4; i++) {
+      const { res } = await login(app, env, 'lgiancare', 'wrong-password');
+      expect(res.status).toBe(401);
+    }
+    const { res: stillOk } = await login(app, env);
+    expect(stillOk.status).toBe(200);
+  });
+
   it('rejects a disabled user', async () => {
     const { cookie } = await login(app, env);
     await req('/api/usuarios', {
@@ -76,6 +97,11 @@ describe('auth', () => {
       body: JSON.stringify({ canal: 'Transferencia', categoria: 'Hogar', cuenta: 'Uala', detalle: 'x', importeArs: 100, cotizacion: 1500, mesAbono: 'Octubre 2026' }),
     }, consultaCookie);
     expect(write.status).toBe(403);
+
+    // /api/usuarios expone el DNI de todas las personas — no debe ser legible
+    // por un rol de solo lectura.
+    const users = await req('/api/usuarios', {}, consultaCookie);
+    expect(users.status).toBe(403);
   });
 });
 

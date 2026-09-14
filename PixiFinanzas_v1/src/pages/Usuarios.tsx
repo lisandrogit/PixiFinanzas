@@ -16,10 +16,14 @@ export default function Usuarios() {
   const [clave, setClave] = useState('');
   const [rol, setRol] = useState<'Rolemaster' | 'Consulta'>('Consulta');
 
-  function load() { api.get<Usuario[]>('/usuarios').then(setUsuarios); }
-  useEffect(load, []);
-
   const isRolemaster = session?.rol === 'Rolemaster';
+
+  // El listado incluye el DNI de cada persona, así que el backend solo lo
+  // entrega a Rolemaster — evitamos el fetch (y su 403) para el resto.
+  function load() {
+    if (isRolemaster) api.get<Usuario[]>('/usuarios').then(setUsuarios);
+  }
+  useEffect(load, [isRolemaster]);
 
   async function crear(e: React.FormEvent) {
     e.preventDefault();
@@ -62,27 +66,29 @@ export default function Usuarios() {
         </form>
       )}
 
-      <table className="table">
-        <thead><tr><th>Nombre</th><th>DNI</th><th>Usuario</th><th>Rol</th><th>Habilitado</th>{isRolemaster && <th />}</tr></thead>
-        <tbody>
-          {usuarios.map((u) => (
-            <tr key={u.ID_USUARIO}>
-              <td>{u.NOMBRE} {u.APELLIDO}</td>
-              <td>{u.DNI}</td>
-              <td>{u.USUARIO}</td>
-              <td>{u.ROL}</td>
-              <td>{u.HABILITADO ? 'Sí' : 'No'}</td>
-              {isRolemaster && (
+      {isRolemaster ? (
+        <table className="table">
+          <thead><tr><th>Nombre</th><th>DNI</th><th>Usuario</th><th>Rol</th><th>Habilitado</th><th /></tr></thead>
+          <tbody>
+            {usuarios.map((u) => (
+              <tr key={u.ID_USUARIO}>
+                <td>{u.NOMBRE} {u.APELLIDO}</td>
+                <td>{u.DNI}</td>
+                <td>{u.USUARIO}</td>
+                <td>{u.ROL}</td>
+                <td>{u.HABILITADO ? 'Sí' : 'No'}</td>
                 <td style={{ textAlign: 'right' }}>
                   <button className="btn btn-ghost text-xs" onClick={() => toggleHabilitado(u)}>
                     {u.HABILITADO ? 'Deshabilitar' : 'Habilitar'}
                   </button>
                 </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <span className="note">Esta sección requiere el rol Rolemaster.</span>
+      )}
     </div>
   );
 }
