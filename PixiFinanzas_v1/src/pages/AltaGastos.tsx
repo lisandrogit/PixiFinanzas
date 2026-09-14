@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { DollarSign, RefreshCw } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
 import { useToast } from '../components/Toast';
 
@@ -8,6 +9,9 @@ interface Mes { ID_MES: number; ETIQUETA: string; ACTIVO: number }
 function todayShort() {
   return new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
+
+const V2_LABEL = 'text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider mb-1.5 block';
+const V2_INPUT = 'w-full bg-v2-bg border border-v2-border rounded-lg px-3 py-2 text-sm text-v2-text placeholder-[#3a4060] focus:outline-none focus:border-v2-accent transition-colors';
 
 export default function AltaGastos() {
   const toast = useToast();
@@ -46,21 +50,40 @@ export default function AltaGastos() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="seg">
-          <button className="seg-opt" aria-pressed={tab === 'variable'} onClick={() => setTab('variable')}>Gasto variable</button>
-          <button className="seg-opt" aria-pressed={tab === 'fijo'} onClick={() => setTab('fijo')}>Gasto fijo (lote)</button>
+    <div className="flex flex-col gap-6 font-v2sans">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-v2-surface border border-v2-border rounded-xl p-5">
+        <div className="flex items-center gap-1 bg-v2-panel rounded-lg p-1">
+          <button
+            className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${tab === 'variable' ? 'bg-v2-accent text-v2-bg' : 'text-v2-subtle hover:text-v2-text'}`}
+            onClick={() => setTab('variable')}
+          >
+            Gasto variable
+          </button>
+          <button
+            className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${tab === 'fijo' ? 'bg-v2-accent text-v2-bg' : 'text-v2-subtle hover:text-v2-text'}`}
+            onClick={() => setTab('fijo')}
+          >
+            Gasto fijo (lote)
+          </button>
         </div>
-        <span className="text-xs text-neutral-700">ID_GASTO autogenerado · FECHA_CARGA {todayShort()}</span>
+        <span className="text-xs text-v2-subtle font-v2mono">ID_GASTO autogenerado · FECHA_CARGA {todayShort()}</span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 p-4" style={{ border: '2px solid var(--color-accent)', borderRadius: 10, background: '#fff' }}>
-        <span className="text-[11px] tracking-wide uppercase font-extrabold" style={{ color: 'var(--color-accent-700)' }}>Dólar oficial · venta</span>
-        <span className="font-extrabold text-2xl leading-none">{dolarVenta != null ? `$ ${dolarVenta.toLocaleString('es-AR')}` : '—'}</span>
-        <span className="text-xs text-neutral-700">Actualizado {dolarFecha || '—'}</span>
-        <button className="btn btn-secondary" onClick={refreshDolar}>Actualizar cotización</button>
-        <span className="note max-w-[340px]">El valor se ingresa manualmente en el formulario y se guarda en CAT_COTIZACION_USD.</span>
+      <div className="flex flex-wrap items-center gap-5 bg-v2-surface border border-v2-border rounded-xl p-4">
+        <div className="flex items-center gap-2">
+          <DollarSign size={16} className="text-v2-warning" />
+          <span className="text-sm font-semibold text-v2-text">Dólar Oficial · venta</span>
+        </div>
+        <span className="font-bold text-2xl leading-none font-v2mono text-v2-warning">{dolarVenta != null ? `$ ${dolarVenta.toLocaleString('es-AR')}` : '—'}</span>
+        <span className="text-xs text-v2-subtle font-v2mono">Actualizado {dolarFecha || '—'}</span>
+        <button
+          className="flex items-center gap-2 bg-v2-warning/15 hover:bg-v2-warning/25 border border-v2-warning/40 text-v2-warning rounded-lg px-4 py-2 text-xs font-medium transition-colors"
+          onClick={refreshDolar}
+        >
+          <RefreshCw size={13} />
+          Actualizar cotización
+        </button>
+        <span className="text-xs text-v2-subtle max-w-[340px]">El valor se ingresa manualmente en el formulario y se guarda en CAT_COTIZACION_USD.</span>
       </div>
 
       {tab === 'variable' && (
@@ -129,95 +152,121 @@ function VariableForm({ categorias, tarjetas, cuentas, meses, cotizacionSugerida
   }
 
   return (
-    <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(400px,1fr))' }}>
-      <section className="flex flex-col gap-4.5">
-        <h6 className="m-0 text-[13px] tracking-wide uppercase">Alta de gasto variable</h6>
+    <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(400px,1fr))' }}>
+      <section className="flex flex-col gap-4 bg-v2-surface border border-v2-border rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-v2-text">Alta de gasto variable</h3>
         <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))' }}>
-          <div className="field"><label>Canal</label>
-            <select className="input" value={canal} onChange={(e) => setCanal(e.target.value as any)}>
+          <div>
+            <label className={V2_LABEL}>Canal</label>
+            <select className={V2_INPUT} value={canal} onChange={(e) => setCanal(e.target.value as any)}>
               <option value="Tarjeta">Tarjeta</option>
               <option value="Transferencia">Transferencia</option>
             </select>
           </div>
-          <div className="field"><label htmlFor="vCategoria">Categoría</label>
-            <select id="vCategoria" className="input" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+          <div>
+            <label htmlFor="vCategoria" className={V2_LABEL}>Categoría</label>
+            <select id="vCategoria" className={V2_INPUT} value={categoria} onChange={(e) => setCategoria(e.target.value)}>
               {categorias.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           {canal === 'Tarjeta' ? (
-            <div className="field"><label htmlFor="vTarjeta">Tarjeta</label>
-              <select id="vTarjeta" className="input" value={tarjeta} onChange={(e) => setTarjeta(e.target.value)}>
+            <div>
+              <label htmlFor="vTarjeta" className={V2_LABEL}>Tarjeta</label>
+              <select id="vTarjeta" className={V2_INPUT} value={tarjeta} onChange={(e) => setTarjeta(e.target.value)}>
                 {tarjetas.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
           ) : (
-            <div className="field"><label htmlFor="vCuenta">Cuenta</label>
-              <select id="vCuenta" className="input" value={cuenta} onChange={(e) => setCuenta(e.target.value)}>
+            <div>
+              <label htmlFor="vCuenta" className={V2_LABEL}>Cuenta</label>
+              <select id="vCuenta" className={V2_INPUT} value={cuenta} onChange={(e) => setCuenta(e.target.value)}>
                 {cuentas.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           )}
-          <div className="field"><label htmlFor="vDetalle">Detalle</label>
-            <input id="vDetalle" className="input" value={detalle} onChange={(e) => setDetalle(e.target.value)} placeholder="ej. Zapatillas running" />
+          <div>
+            <label htmlFor="vDetalle" className={V2_LABEL}>Detalle</label>
+            <input id="vDetalle" className={V2_INPUT} value={detalle} onChange={(e) => setDetalle(e.target.value)} placeholder="ej. Zapatillas running" />
           </div>
-          <div className="field"><label htmlFor="vImporte">Importe (ARS)</label>
-            <input id="vImporte" className="input" value={importe} onChange={(e) => setImporte(e.target.value)} inputMode="decimal" placeholder="0,00" />
+          <div>
+            <label htmlFor="vImporte" className={V2_LABEL}>Importe (ARS)</label>
+            <input id="vImporte" className={`${V2_INPUT} font-v2mono`} value={importe} onChange={(e) => setImporte(e.target.value)} inputMode="decimal" placeholder="0,00" />
           </div>
-          <div className="field"><label htmlFor="vCotiz">Cotización dólar</label>
-            <input id="vCotiz" className="input" value={cotiz} onChange={(e) => setCotiz(e.target.value)} inputMode="decimal" />
+          <div>
+            <label htmlFor="vCotiz" className={V2_LABEL}>Cotización dólar</label>
+            <input id="vCotiz" className={`${V2_INPUT} font-v2mono`} value={cotiz} onChange={(e) => setCotiz(e.target.value)} inputMode="decimal" />
           </div>
-          <div className="field"><label htmlFor="vMes">MES_ABONO</label>
-            <select id="vMes" className="input" value={mes} onChange={(e) => setMes(e.target.value)}>
+          <div>
+            <label htmlFor="vMes" className={V2_LABEL}>MES_ABONO</label>
+            <select id="vMes" className={V2_INPUT} value={mes} onChange={(e) => setMes(e.target.value)}>
               {meses.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
         </div>
 
         {canal === 'Tarjeta' && (
-          <div className="flex flex-col gap-3.5 p-4" style={{ border: '2px solid var(--color-divider)' }}>
+          <div className="flex flex-col gap-3 bg-v2-bg border border-v2-border rounded-lg p-4">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[11px] tracking-wide uppercase font-extrabold">Caso especial · compra en cuotas</span>
-              <button className="btn btn-ghost text-xs" onClick={() => setEnCuotas((v) => !v)}>{enCuotas ? 'Quitar cuotas' : 'Agregar cuotas'}</button>
+              <span className="text-[11px] tracking-wide uppercase font-semibold text-v2-text">Caso especial · compra en cuotas</span>
+              <button className="text-xs text-v2-accent hover:text-v2-accent/80 transition-colors" onClick={() => setEnCuotas((v) => !v)}>
+                {enCuotas ? 'Quitar cuotas' : 'Agregar cuotas'}
+              </button>
             </div>
             {enCuotas && (
-              <div className="flex flex-col gap-3.5">
-                <div className="grid gap-3.5" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))' }}>
-                  <div className="field"><label>Cantidad de cuotas</label>
-                    <input className="input" value={cuotas} onChange={(e) => setCuotas(e.target.value)} inputMode="numeric" />
+              <div className="flex flex-col gap-3">
+                <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))' }}>
+                  <div>
+                    <label className={V2_LABEL}>Cantidad de cuotas</label>
+                    <input className={V2_INPUT} value={cuotas} onChange={(e) => setCuotas(e.target.value)} inputMode="numeric" />
                   </div>
-                  <div className="field"><label>Importe por cuota (ARS)</label>
-                    <input className="input" value={cuotaImporte} onChange={(e) => setCuotaImporte(e.target.value)} inputMode="decimal" />
+                  <div>
+                    <label className={V2_LABEL}>Importe por cuota (ARS)</label>
+                    <input className={`${V2_INPUT} font-v2mono`} value={cuotaImporte} onChange={(e) => setCuotaImporte(e.target.value)} inputMode="decimal" />
                   </div>
-                  <div className="field"><label>Período primera cuota</label>
-                    <select className="input" value={cuotaInicio} onChange={(e) => setCuotaInicio(e.target.value)}>
+                  <div>
+                    <label className={V2_LABEL}>Período primera cuota</label>
+                    <select className={V2_INPUT} value={cuotaInicio} onChange={(e) => setCuotaInicio(e.target.value)}>
                       {meses.map((m) => <option key={m} value={m}>{m}</option>)}
                     </select>
                   </div>
                 </div>
-                <span className="note">Se replican {cuotas} registros en GASTOS_TARJETA, uno por cuota, con MES_ABONO correlativo desde {cuotaInicio}.</span>
+                <span className="text-xs text-v2-subtle">Se replican {cuotas} registros en GASTOS_TARJETA, uno por cuota, con MES_ABONO correlativo desde {cuotaInicio}.</span>
               </div>
             )}
           </div>
         )}
 
-        <div className="flex items-center gap-3.5">
-          <button className="btn btn-primary" disabled={saving || !detalle} onClick={save}>Guardar gasto</button>
-          <span className="note max-w-[380px]">Se guardan los ID de cada maestro; en pantalla se muestra siempre la descripción.</span>
+        <div className="flex items-center gap-3 pt-1">
+          <button
+            className="bg-v2-accent hover:bg-v2-accent/90 disabled:opacity-50 text-v2-bg font-semibold rounded-lg px-5 py-2 text-sm transition-colors"
+            disabled={saving || !detalle}
+            onClick={save}
+          >
+            Guardar gasto
+          </button>
+          <span className="text-xs text-v2-subtle max-w-[380px]">Se guardan los ID de cada maestro; en pantalla se muestra siempre la descripción.</span>
         </div>
       </section>
 
-      <aside className="flex flex-col gap-3.5 min-w-0">
-        <h6 className="m-0 text-[13px] tracking-wide uppercase">Registros que se van a impactar</h6>
+      <aside className="flex flex-col gap-3 min-w-0 bg-v2-surface border border-v2-border rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-v2-text">Registros que se van a impactar</h3>
         <div className="overflow-x-auto">
-          <table className="table" style={{ minWidth: 380, tableLayout: 'fixed' }}>
-            <thead><tr><th>Tabla</th><th>MES_ABONO</th><th style={{ textAlign: 'right' }}>IMPORTE</th><th style={{ textAlign: 'right' }}>IMPORTE_USD</th></tr></thead>
+          <table className="w-full text-xs" style={{ minWidth: 380 }}>
+            <thead>
+              <tr className="border-b border-v2-border">
+                <th className="text-left px-2 py-2 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Tabla</th>
+                <th className="text-left px-2 py-2 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">MES_ABONO</th>
+                <th className="text-right px-2 py-2 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">IMPORTE</th>
+                <th className="text-right px-2 py-2 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">IMPORTE_USD</th>
+              </tr>
+            </thead>
             <tbody>
               {preview.map((r, i) => (
-                <tr key={i}>
-                  <td style={{ fontSize: 11 }}>{r.tabla}</td>
-                  <td style={{ fontSize: 12 }}>{r.mes}</td>
-                  <td style={{ textAlign: 'right', fontSize: 12 }}>{r.importe.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
-                  <td style={{ textAlign: 'right', fontSize: 12, color: 'var(--color-text)' }}>{r.usd.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+                <tr key={i} className="border-b border-v2-border">
+                  <td className="px-2 py-2 text-v2-subtle">{r.tabla}</td>
+                  <td className="px-2 py-2 font-v2mono text-v2-text">{r.mes}</td>
+                  <td className="px-2 py-2 text-right font-v2mono text-v2-text">{r.importe.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+                  <td className="px-2 py-2 text-right font-v2mono text-v2-accent">{r.usd.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
                 </tr>
               ))}
             </tbody>
@@ -292,50 +341,59 @@ function FijoBatch({ categorias, tarjetas, cuentas, meses, cotizacionSugerida }:
   }
 
   return (
-    <div className="flex flex-col gap-4.5 min-w-0 overflow-x-auto">
-      <div className="flex flex-wrap items-end justify-between gap-4.5">
-        <div className="field" style={{ minWidth: 220 }}>
-          <label>MES_ABONO del lote</label>
-          <select className="input" value={loteMes} onChange={(e) => setLoteMes(e.target.value)}>
+    <div className="flex flex-col gap-4 min-w-0 overflow-x-auto bg-v2-surface border border-v2-border rounded-xl p-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div style={{ minWidth: 220 }}>
+          <label className={V2_LABEL}>MES_ABONO del lote</label>
+          <select className={V2_INPUT} value={loteMes} onChange={(e) => setLoteMes(e.target.value)}>
             {meses.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
-        <span className="note max-w-[440px]">Precargado con los costos fijos del último período cerrado ({lastClosed || '—'}) y su valor abonado. Editá, agregá o eliminá filas; el resto queda sin cambios.</span>
+        <span className="text-xs text-v2-subtle max-w-[440px]">Precargado con los costos fijos del último período cerrado ({lastClosed || '—'}) y su valor abonado. Editá, agregá o eliminá filas; el resto queda sin cambios.</span>
       </div>
 
-      <table className="table" style={{ minWidth: 820 }}>
-        <thead><tr><th>Concepto</th><th>Categoría</th><th>Canal</th><th>Tarjeta / Cuenta</th><th style={{ textAlign: 'right' }}>Importe ARS</th><th /></tr></thead>
+      <table className="w-full text-xs" style={{ minWidth: 820 }}>
+        <thead>
+          <tr className="border-b border-v2-border">
+            <th className="text-left px-2 py-2 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Concepto</th>
+            <th className="text-left px-2 py-2 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Categoría</th>
+            <th className="text-left px-2 py-2 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Canal</th>
+            <th className="text-left px-2 py-2 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Tarjeta / Cuenta</th>
+            <th className="text-right px-2 py-2 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Importe ARS</th>
+            <th />
+          </tr>
+        </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id}>
-              <td><input className="input" style={{ padding: '6px 8px', fontSize: 13 }} value={row.concepto} onChange={(e) => updateRow(row.id, { concepto: e.target.value })} /></td>
-              <td>
-                <select className="input" style={{ padding: '6px 8px', fontSize: 13 }} value={row.categoria} onChange={(e) => updateRow(row.id, { categoria: e.target.value })}>
+            <tr key={row.id} className="border-b border-v2-border hover:bg-v2-panel transition-colors">
+              <td className="px-2 py-2"><input className={`${V2_INPUT} px-2 py-1.5`} value={row.concepto} onChange={(e) => updateRow(row.id, { concepto: e.target.value })} /></td>
+              <td className="px-2 py-2">
+                <select className={`${V2_INPUT} px-2 py-1.5`} value={row.categoria} onChange={(e) => updateRow(row.id, { categoria: e.target.value })}>
                   {categorias.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </td>
-              <td>
-                <select className="input" style={{ padding: '6px 8px', fontSize: 13 }} value={row.canal} onChange={(e) => updateRow(row.id, { canal: e.target.value as any })}>
+              <td className="px-2 py-2">
+                <select className={`${V2_INPUT} px-2 py-1.5`} value={row.canal} onChange={(e) => updateRow(row.id, { canal: e.target.value as any })}>
                   <option value="Tarjeta">Tarjeta</option>
                   <option value="Transferencia">Transferencia</option>
                 </select>
               </td>
-              <td>
+              <td className="px-2 py-2">
                 {row.canal === 'Tarjeta' ? (
-                  <select className="input" style={{ padding: '6px 8px', fontSize: 13 }} value={row.tarjeta} onChange={(e) => updateRow(row.id, { tarjeta: e.target.value })}>
+                  <select className={`${V2_INPUT} px-2 py-1.5`} value={row.tarjeta} onChange={(e) => updateRow(row.id, { tarjeta: e.target.value })}>
                     {tarjetas.map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
                 ) : (
-                  <select className="input" style={{ padding: '6px 8px', fontSize: 13 }} value={row.cuenta} onChange={(e) => updateRow(row.id, { cuenta: e.target.value })}>
+                  <select className={`${V2_INPUT} px-2 py-1.5`} value={row.cuenta} onChange={(e) => updateRow(row.id, { cuenta: e.target.value })}>
                     {cuentas.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 )}
               </td>
-              <td style={{ textAlign: 'right' }}>
-                <input className="input" style={{ padding: '6px 8px', fontSize: 13, textAlign: 'right' }} value={row.importe} onChange={(e) => updateRow(row.id, { importe: e.target.value })} inputMode="decimal" />
+              <td className="px-2 py-2 text-right">
+                <input className={`${V2_INPUT} px-2 py-1.5 text-right font-v2mono`} value={row.importe} onChange={(e) => updateRow(row.id, { importe: e.target.value })} inputMode="decimal" />
               </td>
-              <td style={{ textAlign: 'right' }}>
-                <button className="btn btn-ghost" style={{ color: 'var(--color-accent-700)', fontSize: 12 }} onClick={() => removeRow(row.id)}>Eliminar</button>
+              <td className="px-2 py-2 text-right">
+                <button className="text-v2-subtle hover:text-v2-danger transition-colors text-xs" onClick={() => removeRow(row.id)}>Eliminar</button>
               </td>
             </tr>
           ))}
@@ -343,10 +401,16 @@ function FijoBatch({ categorias, tarjetas, cuentas, meses, cotizacionSugerida }:
       </table>
 
       <div className="flex flex-wrap items-center gap-4">
-        <button className="btn btn-secondary" onClick={addRow}>Agregar gasto fijo</button>
-        <button className="btn btn-primary" disabled={confirming || !rows.length} onClick={confirmLote}>Confirmar lote · {rows.length} registros</button>
-        <span className="font-extrabold text-base">Total $ {total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
-        <span className="note">El backend da de alta todos los registros para el período {loteMes || '—'}.</span>
+        <button className="border border-v2-border text-v2-text hover:bg-v2-panel rounded-lg px-4 py-2 text-sm transition-colors" onClick={addRow}>Agregar gasto fijo</button>
+        <button
+          className="bg-v2-accent hover:bg-v2-accent/90 disabled:opacity-50 text-v2-bg font-semibold rounded-lg px-5 py-2 text-sm transition-colors"
+          disabled={confirming || !rows.length}
+          onClick={confirmLote}
+        >
+          Confirmar lote · {rows.length} registros
+        </button>
+        <span className="font-bold text-base text-v2-text">Total $ {total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
+        <span className="text-xs text-v2-subtle">El backend da de alta todos los registros para el período {loteMes || '—'}.</span>
       </div>
     </div>
   );
