@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { api } from '../lib/api';
 import { useToast } from '../components/Toast';
-import { LineComboChart, BarComboChart, SaludGauge } from '../components/Charts';
+import { LineComboChart, BarComboChart, SaludGauge, V2_ACCENT, V2_ACCENT2, V2_INK } from '../components/Charts';
 
 interface Vencimientos {
   periods: { mes: number; label: string }[];
@@ -23,6 +23,7 @@ function money(v: number, currency: 'ARS' | 'USD', rate: number) {
   const prefix = currency === 'USD' ? 'US$ ' : '$ ';
   return prefix + val.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
 
 export default function Home({ refreshKey }: { refreshKey: number }) {
   const toast = useToast();
@@ -90,119 +91,133 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
   };
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(420px,1fr))' }}>
-        <section className="min-w-0 overflow-x-auto">
-          <h6 className="m-0 mb-3 text-[13px] tracking-wide uppercase">Próximos vencimientos</h6>
+    <div className="flex flex-col gap-6 font-v2sans">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <section className="lg:col-span-2 bg-v2-surface border border-v2-border rounded-xl p-5 min-w-0">
+          <h3 className="text-sm font-semibold text-v2-text mb-4">Próximos vencimientos</h3>
           {venc && (
-            <table className="table" style={{ minWidth: 400, tableLayout: 'fixed' }}>
-              <thead>
-                <tr>
-                  <th>Medio de pago</th>
-                  {venc.periods.map((p) => <th key={p.mes} style={{ textAlign: 'right' }}>{p.label}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {venc.tarjetas.map((row) => (
-                  <tr key={row.tarjeta}>
-                    <td style={{ paddingLeft: 18, fontSize: 13, color: 'var(--color-text)' }}>{row.tarjeta}</td>
-                    {row.valores.map((v, i) => {
-                      const colVals = venc.tarjetas.map((r) => r.valores[i]);
-                      return <td key={i} style={{ textAlign: 'right', fontSize: 13, ...heatColor(v, colVals) }}>{money(v, 'ARS', rate)}</td>;
-                    })}
-                  </tr>
-                ))}
-                <tr>
-                  <td style={{ fontWeight: 700 }}>Total tarjeta</td>
-                  {venc.totalTarjeta.map((v, i) => <td key={i} style={{ textAlign: 'right', fontWeight: 700 }}>{money(v, 'ARS', rate)}</td>)}
-                </tr>
-                <tr>
-                  <td>Transferencia</td>
-                  {venc.transferencia.map((v, i) => <td key={i} style={{ textAlign: 'right' }}>{money(v, 'ARS', rate)}</td>)}
-                </tr>
-                <tr style={{ borderTop: '2px solid var(--color-divider)' }}>
-                  <td style={{ fontWeight: 800 }}>Total período</td>
-                  {venc.totalPeriodo.map((v, i) => <td key={i} style={{ textAlign: 'right', fontWeight: 800 }}>{money(v, 'ARS', rate)}</td>)}
-                </tr>
-              </tbody>
-            </table>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {venc.periods.map((p, pi) => {
+                const colVals = venc.tarjetas.map((r) => r.valores[pi]);
+                return (
+                  <div key={p.mes} className="bg-v2-bg rounded-lg p-3 border border-v2-border">
+                    <p className="text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider mb-2">{p.label}</p>
+                    {venc.tarjetas.map((row) => (
+                      <div key={row.tarjeta} className="flex justify-between items-center mb-1 gap-2">
+                        <span className="text-[10px] text-v2-subtle truncate">{row.tarjeta}</span>
+                        <span
+                          className="text-[10px] font-v2mono ml-2 px-1 rounded"
+                          style={heatColor(row.valores[pi], colVals)}
+                        >
+                          {money(row.valores[pi], 'ARS', rate)}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="border-t border-v2-border my-2" />
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[10px] text-v2-subtle">Transferencias</span>
+                      <span className="text-[10px] font-v2mono text-v2-text">{money(venc.transferencia[pi], 'ARS', rate)}</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-[10px] font-semibold text-v2-text">Total</span>
+                      <span className="text-xs font-bold font-v2mono text-v2-accent">{money(venc.totalPeriodo[pi], 'ARS', rate)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
-          {venc?.sinDatos ? (
-            <span className="note mt-3 block max-w-[420px]">
+          {venc?.sinDatos && (
+            <span className="block mt-3 text-xs text-v2-subtle bg-v2-bg border border-v2-border rounded-lg px-3 py-2 max-w-[420px]">
               Todavía no hay gastos cargados para estos períodos. Los vencimientos aparecen acá a
               medida que cargás gastos fijos por lote o gastos en cuotas desde "Alta de Gastos".
             </span>
-          ) : (
-            <div className="flex items-center gap-2.5 mt-3">
-              <span className="text-[10px] tracking-wide uppercase text-neutral-700">Menor</span>
-              <span style={{ flex: 1, maxWidth: 180, height: 8, borderRadius: 999, background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 8%, #fff), color-mix(in srgb, var(--color-accent) 54%, #fff), var(--color-accent-700))' }} />
-              <span className="text-[10px] tracking-wide uppercase text-neutral-700">Mayor por período</span>
-            </div>
           )}
         </section>
 
-        <section className="flex flex-col">
-          <h6 className="m-0 mb-3 text-[13px] tracking-wide uppercase">Salud financiera</h6>
-          <div className="flex-1 flex flex-col items-start justify-between p-4" style={{ border: '2px solid var(--color-divider)' }}>
-            {salud && !salud.sinDatosProximos && <SaludGauge variacionPct={salud.variacionPct} />}
-            {salud?.sinDatosProximos ? (
-              <>
-                <span className="font-extrabold text-[22px] leading-tight">Sin datos aún</span>
-                <span className="note mt-2.5">
-                  Todavía no hay gastos cargados para los próximos 3 períodos, así que no se puede
-                  calcular la variación. Cargá los gastos fijos del próximo mes desde "Alta de Gastos"
-                  para ver este indicador.
-                </span>
-              </>
-            ) : (
-              <>
-                <div className="flex items-baseline gap-2.5 mt-1.5">
-                  <span className="font-extrabold text-[34px] leading-none">{salud ? `${salud.variacionPct >= 0 ? '+' : ''}${salud.variacionPct.toFixed(1)}%` : '—'}</span>
-                  <span className="text-xs text-neutral-700 max-w-[200px]">vs. promedio de los 3 períodos cerrados</span>
-                </div>
-                <span className="note mt-2.5">Promedio 3 períodos cerrados vs. próximos 3</span>
-              </>
-            )}
-          </div>
+        <section className="bg-v2-surface border border-v2-border rounded-xl p-5 flex flex-col items-center justify-center">
+          <h3 className="text-sm font-semibold text-v2-text mb-3 text-center self-stretch">Salud financiera</h3>
+          {salud && !salud.sinDatosProximos && <SaludGauge variacionPct={salud.variacionPct} dark />}
+          {salud?.sinDatosProximos ? (
+            <>
+              <span className="font-bold text-lg text-v2-text leading-tight">Sin datos aún</span>
+              <span className="mt-2.5 text-xs text-v2-subtle text-center">
+                Todavía no hay gastos cargados para los próximos 3 períodos, así que no se puede
+                calcular la variación. Cargá los gastos fijos del próximo mes desde "Alta de Gastos"
+                para ver este indicador.
+              </span>
+            </>
+          ) : (
+            <>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="font-bold text-2xl font-v2mono text-v2-text">{salud ? `${salud.variacionPct >= 0 ? '+' : ''}${salud.variacionPct.toFixed(1)}%` : '—'}</span>
+              </div>
+              <span className="text-[11px] text-v2-subtle mt-1 text-center">vs. promedio 3 períodos cerrados</span>
+            </>
+          )}
         </section>
       </div>
 
-      <hr className="hr" />
-
-      <section className="flex flex-col gap-3.5">
-        <h6 className="m-0 text-[13px] tracking-wide uppercase">Exportación de resumen</h6>
+      <section className="bg-v2-surface border border-v2-border rounded-xl p-5 flex flex-col gap-3.5">
+        <h3 className="text-sm font-semibold text-v2-text">Exportación de resumen</h3>
         <div className="flex flex-wrap items-end gap-4">
-          <div className="field" style={{ minWidth: 220 }}>
-            <label htmlFor="expPeriod">Período</label>
-            <input className="input" id="expPeriod" list="periodList" value={expPeriod} onChange={(e) => setExpPeriod(e.target.value)} placeholder="Escribí para buscar…" />
+          <div className="flex-1" style={{ minWidth: 220 }}>
+            <label htmlFor="expPeriod" className="text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider mb-1.5 block">Período</label>
+            <input
+              className="w-full bg-v2-bg border border-v2-border rounded-lg px-3 py-2 text-sm text-v2-text focus:outline-none focus:border-v2-accent transition-colors"
+              id="expPeriod" list="periodList" value={expPeriod} onChange={(e) => setExpPeriod(e.target.value)} placeholder="Escribí para buscar…"
+            />
             <datalist id="periodList">{meses.map((m) => <option key={m.ID_MES} value={m.ETIQUETA} />)}</datalist>
           </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label htmlFor="expCanal">Canal</label>
-            <select className="input" id="expCanal" value={expCanal} onChange={(e) => setExpCanal(e.target.value)}>
+          <div className="flex-1" style={{ minWidth: 180 }}>
+            <label htmlFor="expCanal" className="text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider mb-1.5 block">Canal</label>
+            <select
+              className="w-full bg-v2-bg border border-v2-border rounded-lg px-3 py-2 text-sm text-v2-text focus:outline-none focus:border-v2-accent transition-colors"
+              id="expCanal" value={expCanal} onChange={(e) => setExpCanal(e.target.value)}
+            >
               <option value="Ambos">Ambos</option>
               <option value="Tarjeta">Tarjeta</option>
               <option value="Transferencia">Transferencia</option>
             </select>
           </div>
-          <button className="btn btn-primary" onClick={exportXlsx}>Exportar .xlsx (ARS)</button>
-          <span className="note max-w-[340px]">Incluye todos los atributos del modelo según el canal elegido. Exportación siempre en ARS.</span>
+          <button
+            className="flex items-center gap-2 bg-v2-accent hover:bg-v2-accent/90 text-v2-bg font-semibold rounded-lg px-4 py-2 text-sm transition-colors shrink-0"
+            onClick={exportXlsx}
+          >
+            Exportar .xlsx (ARS)
+          </button>
+          <span className="text-xs text-v2-subtle max-w-[340px]">Incluye todos los atributos del modelo según el canal elegido. Exportación siempre en ARS.</span>
         </div>
       </section>
 
-      <hr className="hr" />
-
-      <section className="flex flex-col gap-4">
+      <section className="flex flex-col gap-4 bg-v2-bg border border-v2-border rounded-xl p-5">
         <div className="flex flex-wrap items-end justify-between gap-5">
-          <h6 className="m-0 text-[13px] tracking-wide uppercase">Resumen de gastos · últimos 9 meses cerrados</h6>
+          <h3 className="text-sm font-semibold text-v2-text">Resumen de gastos · últimos 9 meses cerrados</h3>
           <div className="flex flex-wrap items-center gap-4">
-            <div className="seg">
-              <button className="seg-opt" aria-pressed={currency === 'ARS'} onClick={() => setCurrency('ARS')}>ARS</button>
-              <button className="seg-opt" aria-pressed={currency === 'USD'} onClick={() => setCurrency('USD')}>USD</button>
+            <div className="flex items-center gap-1 bg-v2-panel rounded-lg p-1">
+              {(['ARS', 'USD'] as const).map((c) => (
+                <button
+                  key={c}
+                  className={`px-3 py-1 rounded-md text-xs font-v2mono font-medium transition-colors ${
+                    currency === c ? 'bg-v2-accent text-v2-bg' : 'text-v2-subtle hover:text-v2-text'
+                  }`}
+                  onClick={() => setCurrency(c)}
+                >
+                  {c}
+                </button>
+              ))}
             </div>
             <div className="flex flex-wrap gap-1.5">
               {categorias.map((c) => (
-                <button key={c.ID_CATEGORIA} className="chip" aria-pressed={!offCats[c.ID_CATEGORIA]} onClick={() => toggleCat(c.ID_CATEGORIA)}>
+                <button
+                  key={c.ID_CATEGORIA}
+                  className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                    !offCats[c.ID_CATEGORIA]
+                      ? 'bg-v2-accent/10 border-v2-accent/30 text-v2-accent'
+                      : 'border-v2-border text-v2-subtle hover:text-v2-text'
+                  }`}
+                  onClick={() => toggleCat(c.ID_CATEGORIA)}
+                >
                   {c.ETIQUETA}
                 </button>
               ))}
@@ -210,25 +225,27 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
           </div>
         </div>
 
-        <div className="grid gap-7" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(340px,1fr))' }}>
-          <figure className="m-0 p-4" style={{ border: '2px solid var(--color-divider)' }}>
-            <figcaption className="text-[11px] tracking-wide uppercase text-neutral-700 mb-2.5">Total por canal · {currency}</figcaption>
+        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(340px,1fr))' }}>
+          <figure className="m-0 bg-v2-surface border border-v2-border rounded-xl p-5">
+            <figcaption className="text-sm font-semibold text-v2-text mb-4">Total por canal · {currency}</figcaption>
             <LineComboChart
+              dark
               labels={canal.map((r) => r.label.slice(0, 3))}
               series={[
-                { name: 'Tarjeta', data: canal.map((r) => currency === 'USD' ? r.tarjetaArs / rate : r.tarjetaArs), color: '#1565d8' },
-                { name: 'Transferencia', data: canal.map((r) => currency === 'USD' ? r.transferenciaArs / rate : r.transferenciaArs), color: '#0f8f86' },
-                { name: 'Total', data: canal.map((r) => currency === 'USD' ? r.ars / rate : r.ars), color: '#201e1d', dashed: true },
+                { name: 'Tarjeta', data: canal.map((r) => currency === 'USD' ? r.tarjetaArs / rate : r.tarjetaArs), color: V2_ACCENT },
+                { name: 'Transferencia', data: canal.map((r) => currency === 'USD' ? r.transferenciaArs / rate : r.transferenciaArs), color: V2_ACCENT2 },
+                { name: 'Total', data: canal.map((r) => currency === 'USD' ? r.ars / rate : r.ars), color: V2_INK, dashed: true },
               ]}
             />
           </figure>
-          <figure className="m-0 p-4" style={{ border: '2px solid var(--color-divider)' }}>
-            <figcaption className="text-[11px] tracking-wide uppercase text-neutral-700 mb-2.5">Fijos vs. variables · {currency}</figcaption>
+          <figure className="m-0 bg-v2-surface border border-v2-border rounded-xl p-5">
+            <figcaption className="text-sm font-semibold text-v2-text mb-4">Fijos vs. variables · {currency}</figcaption>
             <BarComboChart
+              dark
               labels={tipo.map((r) => r.label.slice(0, 3))}
               groups={[
-                { name: 'Fijos', data: tipo.map((r) => currency === 'USD' ? r.fijoUsd : r.fijoArs), color: '#1565d8' },
-                { name: 'Variables', data: tipo.map((r) => currency === 'USD' ? r.variableUsd : r.variableArs), color: '#0f8f86' },
+                { name: 'Fijos', data: tipo.map((r) => currency === 'USD' ? r.fijoUsd : r.fijoArs), color: V2_ACCENT2 },
+                { name: 'Variables', data: tipo.map((r) => currency === 'USD' ? r.variableUsd : r.variableArs), color: V2_ACCENT },
               ]}
               totalLine={tipo.map((r) => currency === 'USD' ? r.fijoUsd + r.variableUsd : r.fijoArs + r.variableArs)}
             />

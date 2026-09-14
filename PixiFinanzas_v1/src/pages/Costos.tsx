@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
-import { LineComboChart, BarLineChart } from '../components/Charts';
+import { LineComboChart, BarLineChart, V2_ACCENT, V2_ACCENT2, V2_PALETTE } from '../components/Charts';
 
 interface TipoRow { mes: number; label: string; fijoArs: number; variableArs: number; fijoUsd: number; variableUsd: number }
 interface ParticipacionRow { mes: number; label: string; porcentaje: number }
 interface VariablesResp { periods: { mes: number; label: string }[]; categorias: { categoria: string; valores: number[] }[] }
 interface Categoria { ID_CATEGORIA: number; ETIQUETA: string; ACTIVO: number }
-
-const PALETTE = ['#1565d8', '#0f8f86', '#e0b02c', '#e07a3c', '#9e3526'];
 
 export default function Costos({ refreshKey }: { refreshKey: number }) {
   const [currency, setCurrency] = useState<'ARS' | 'USD'>('ARS');
@@ -35,58 +33,83 @@ export default function Costos({ refreshKey }: { refreshKey: number }) {
   }
 
   return (
-    <div className="flex flex-col gap-7">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h6 className="m-0 text-[13px] tracking-wide uppercase">Costos fijos y variables</h6>
-        <div className="seg">
-          <button className="seg-opt" aria-pressed={currency === 'ARS'} onClick={() => setCurrency('ARS')}>ARS</button>
-          <button className="seg-opt" aria-pressed={currency === 'USD'} onClick={() => setCurrency('USD')}>USD</button>
+    <div className="flex flex-col gap-6 font-v2sans">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-v2-surface border border-v2-border rounded-xl p-5">
+        <div>
+          <h1 className="text-xl font-bold text-v2-text m-0">Costos Fijos y Variables</h1>
+          <p className="text-sm text-v2-subtle mt-0.5 mb-0">Análisis de los últimos 9–12 meses</p>
+        </div>
+        <div className="flex items-center gap-1 bg-v2-panel rounded-lg p-1">
+          {(['ARS', 'USD'] as const).map((c) => (
+            <button
+              key={c}
+              className={`px-3 py-1 rounded-md text-xs font-v2mono font-medium transition-colors ${
+                currency === c ? 'bg-v2-accent text-v2-bg' : 'text-v2-subtle hover:text-v2-text'
+              }`}
+              onClick={() => setCurrency(c)}
+            >
+              {c}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="grid gap-7" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(340px,1fr))' }}>
-        <figure className="m-0 p-4" style={{ border: '2px solid var(--color-divider)' }}>
-          <figcaption className="text-[11px] tracking-wide uppercase text-neutral-700 mb-2.5">Detalle de costos fijos y variables · 9 meses cerrados · {currency}</figcaption>
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(340px,1fr))' }}>
+        <figure className="m-0 bg-v2-surface border border-v2-border rounded-xl p-5">
+          <figcaption className="text-sm font-semibold text-v2-text mb-4">Detalle de costos fijos y variables · 9 meses cerrados · {currency}</figcaption>
           <LineComboChart
+            dark
             labels={tipo.map((r) => r.label.slice(0, 3))}
             series={[
-              { name: 'Fijos', data: tipo.map((r) => (currency === 'USD' ? r.fijoUsd : r.fijoArs)), color: '#1565d8', area: true },
-              { name: 'Variables', data: tipo.map((r) => (currency === 'USD' ? r.variableUsd : r.variableArs)), color: '#0f8f86' },
+              { name: 'Fijos', data: tipo.map((r) => (currency === 'USD' ? r.fijoUsd : r.fijoArs)), color: V2_ACCENT2, area: true },
+              { name: 'Variables', data: tipo.map((r) => (currency === 'USD' ? r.variableUsd : r.variableArs)), color: V2_ACCENT },
             ]}
           />
         </figure>
-        <figure className="m-0 p-4" style={{ border: '2px solid var(--color-divider)' }}>
-          <figcaption className="text-[11px] tracking-wide uppercase text-neutral-700 mb-2.5">Participación de costos fijos sobre ingresos · 12 meses</figcaption>
+        <figure className="m-0 bg-v2-surface border border-v2-border rounded-xl p-5">
+          <figcaption className="text-sm font-semibold text-v2-text mb-4">Participación de costos fijos sobre ingresos · 12 meses</figcaption>
           <BarLineChart
+            dark
             labels={participacion.map((r) => r.label.slice(0, 3))}
             bars={participacion.map((r) => r.porcentaje)}
             lineFormatter={(v) => `${v.toFixed(0)}%`}
           />
+          <div className="mt-3 flex items-center gap-2">
+            <div className="flex-1 border-t border-dashed border-v2-danger/40" />
+            <span className="text-[10px] font-v2mono text-v2-danger">≥70% crítico</span>
+          </div>
         </figure>
       </div>
 
-      <hr className="hr" />
-
-      <section className="flex flex-col gap-3.5">
+      <section className="flex flex-col gap-3.5 bg-v2-bg border border-v2-border rounded-xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h6 className="m-0 text-[13px] tracking-wide uppercase">Detalle de costos variables · top 5 categorías · {currency}</h6>
+          <h3 className="text-sm font-semibold text-v2-text">Detalle de costos variables · top 5 categorías · {currency}</h3>
           <div className="flex flex-wrap gap-1.5">
             {categorias.map((c) => (
-              <button key={c.ID_CATEGORIA} className="chip" aria-pressed={!offCats[c.ID_CATEGORIA]} onClick={() => toggleCat(c.ID_CATEGORIA)}>
+              <button
+                key={c.ID_CATEGORIA}
+                className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                  !offCats[c.ID_CATEGORIA]
+                    ? 'bg-v2-accent/10 border-v2-accent/30 text-v2-accent'
+                    : 'border-v2-border text-v2-subtle hover:text-v2-text'
+                }`}
+                onClick={() => toggleCat(c.ID_CATEGORIA)}
+              >
                 {c.ETIQUETA}
               </button>
             ))}
           </div>
         </div>
-        <figure className="m-0 p-4" style={{ border: '2px solid var(--color-divider)' }}>
+        <figure className="m-0 bg-v2-surface border border-v2-border rounded-xl p-5">
           {variables && (
             variables.categorias.length ? (
               <LineComboChart
+                dark
                 labels={variables.periods.map((p) => p.label.slice(0, 3))}
-                series={variables.categorias.map((c, i) => ({ name: c.categoria, data: c.valores, color: PALETTE[i % PALETTE.length] }))}
+                series={variables.categorias.map((c, i) => ({ name: c.categoria, data: c.valores, color: V2_PALETTE[i % V2_PALETTE.length] }))}
               />
             ) : (
-              <span className="note">No hay categorías seleccionadas — activá al menos una arriba.</span>
+              <span className="text-xs text-v2-subtle">No hay categorías seleccionadas — activá al menos una arriba.</span>
             )
           )}
         </figure>

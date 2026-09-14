@@ -1,3 +1,9 @@
+/* Fuentes del rediseño v2 (Figma) — solo se usan en los componentes ya
+   migrados a la paleta `v2` de tailwind.config.js; el resto de la app sigue
+   con Roboto hasta que se migre. Los @import van primero: es requisito de CSS. */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
+import { Filter, Search, Download, CheckCircle, XCircle } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
 import { useToast } from '../components/Toast';
 
@@ -7,8 +8,12 @@ interface Mes { ID_MES: number; ETIQUETA: string; ACTIVO: number }
 interface Categoria { ID_CATEGORIA: number; ETIQUETA: string; ACTIVO: number }
 interface Historial { ID_HISTORIAL: number; FECHA: string; USUARIO: string; MOTIVO: string; REGISTROS: number; ESTADO: string; DETALLE: string }
 
+const V2_LABEL = 'text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider mb-1.5 block';
+const V2_INPUT = 'w-full bg-v2-bg border border-v2-border rounded-lg px-3 py-2 text-sm text-v2-text focus:outline-none focus:border-v2-accent transition-colors';
+
 export default function Consultas() {
   const toast = useToast();
+  const [tab, setTab] = useState<'consulta' | 'historial'>('consulta');
   const [meses, setMeses] = useState<Mes[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [desde, setDesde] = useState('');
@@ -80,104 +85,189 @@ export default function Consultas() {
   }
 
   return (
-    <div className="flex flex-col gap-7">
-      <h6 className="m-0 text-[13px] tracking-wide uppercase">Consultas y actualizaciones retroactivas</h6>
-
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="field"><label>Desde</label>
-          <select className="input" value={desde} onChange={(e) => setDesde(e.target.value)}>
-            {meses.map((m) => <option key={m.ID_MES} value={m.ID_MES}>{m.ETIQUETA}</option>)}
-          </select>
+    <div className="flex flex-col gap-6 font-v2sans">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-v2-surface border border-v2-border rounded-xl p-5">
+        <div>
+          <h1 className="text-xl font-bold text-v2-text m-0">Consultas y Actualizaciones</h1>
+          <p className="text-sm text-v2-subtle mt-0.5 mb-0">Búsqueda de gastos y actualizaciones retroactivas</p>
         </div>
-        <div className="field"><label>Hasta</label>
-          <select className="input" value={hasta} onChange={(e) => setHasta(e.target.value)}>
-            {meses.map((m) => <option key={m.ID_MES} value={m.ID_MES}>{m.ETIQUETA}</option>)}
-          </select>
+        <div className="flex items-center gap-1 bg-v2-panel rounded-lg p-1">
+          <button
+            className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${tab === 'consulta' ? 'bg-v2-accent text-v2-bg' : 'text-v2-subtle hover:text-v2-text'}`}
+            onClick={() => setTab('consulta')}
+          >
+            Consulta general
+          </button>
+          <button
+            className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${tab === 'historial' ? 'bg-v2-accent text-v2-bg' : 'text-v2-subtle hover:text-v2-text'}`}
+            onClick={() => setTab('historial')}
+          >
+            Historial masivo
+          </button>
         </div>
-        <div className="field"><label>Canal</label>
-          <select className="input" value={canal} onChange={(e) => setCanal(e.target.value)}>
-            <option value="ambos">Ambos</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option>
-          </select>
-        </div>
-        <div className="field"><label>Tipo de gasto</label>
-          <select className="input" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-            <option value="ambos">Ambos</option><option value="fijo">Fijo</option><option value="variable">Variable</option>
-          </select>
-        </div>
-        <button className="btn btn-primary" onClick={buscar}>Buscar</button>
-        <button className="btn btn-secondary" onClick={exportar} disabled={!rows.length}>Exportar .xlsx</button>
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
-        {categorias.map((c) => (
-          <button key={c.ID_CATEGORIA} className="chip" aria-pressed={catSel.includes(c.ID_CATEGORIA)} onClick={() => toggleCat(c.ID_CATEGORIA)}>{c.ETIQUETA}</button>
-        ))}
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="table">
-          <thead><tr><th>Tabla</th><th>Fecha</th><th>Detalle</th><th>Categoría</th><th>Período</th><th style={{ textAlign: 'right' }}>Importe</th></tr></thead>
-          <tbody>
-            {rows.map((r: any) => (
-              <tr key={`${r.TABLA}-${r.ID_GASTO}`}>
-                <td style={{ fontSize: 11 }}>{r.TABLA}</td>
-                <td>{r.FECHA_CARGA}</td>
-                <td>{r.DETALLE}</td>
-                <td>{r.CATEGORIA}</td>
-                <td>{r.MES_ABONO}</td>
-                <td style={{ textAlign: 'right' }}>{Number(r.IMPORTE).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!rows.length && <p className="text-sm text-neutral-600 mt-2">Sin resultados todavía — hacé una búsqueda.</p>}
-      </div>
-
-      <hr className="hr" />
-
-      <section className="flex flex-col gap-3.5">
-        <h6 className="m-0 text-[13px] tracking-wide uppercase">Actualización retroactiva por Excel</h6>
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="field" style={{ minWidth: 280 }}>
-            <label>Motivo de la edición</label>
-            <input className="input" value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="ej. Corrección de categoría" />
+      {tab === 'consulta' ? (
+        <>
+          <div className="bg-v2-surface border border-v2-border rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-v2-text mb-4 flex items-center gap-2">
+              <Filter size={14} className="text-v2-accent" />
+              Filtros de búsqueda
+            </h3>
+            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))' }}>
+              <div>
+                <label className={V2_LABEL}>Desde</label>
+                <select className={V2_INPUT} value={desde} onChange={(e) => setDesde(e.target.value)}>
+                  {meses.map((m) => <option key={m.ID_MES} value={m.ID_MES}>{m.ETIQUETA}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={V2_LABEL}>Hasta</label>
+                <select className={V2_INPUT} value={hasta} onChange={(e) => setHasta(e.target.value)}>
+                  {meses.map((m) => <option key={m.ID_MES} value={m.ID_MES}>{m.ETIQUETA}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={V2_LABEL}>Canal</label>
+                <select className={V2_INPUT} value={canal} onChange={(e) => setCanal(e.target.value)}>
+                  <option value="ambos">Ambos</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option>
+                </select>
+              </div>
+              <div>
+                <label className={V2_LABEL}>Tipo de gasto</label>
+                <select className={V2_INPUT} value={tipo} onChange={(e) => setTipo(e.target.value)}>
+                  <option value="ambos">Ambos</option><option value="fijo">Fijo</option><option value="variable">Variable</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+              <div className="flex gap-1.5 flex-wrap">
+                {categorias.map((c) => (
+                  <button
+                    key={c.ID_CATEGORIA}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors border ${
+                      catSel.includes(c.ID_CATEGORIA)
+                        ? 'bg-v2-accent/10 text-v2-accent border-v2-accent/30'
+                        : 'bg-v2-bg text-v2-subtle border-v2-border hover:text-v2-text'
+                    }`}
+                    onClick={() => toggleCat(c.ID_CATEGORIA)}
+                  >
+                    {c.ETIQUETA}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  className="flex items-center gap-1.5 text-xs text-v2-subtle hover:text-v2-text bg-v2-panel border border-v2-border rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50"
+                  onClick={exportar}
+                  disabled={!rows.length}
+                >
+                  <Download size={12} />
+                  Exportar .xlsx
+                </button>
+                <button
+                  className="flex items-center gap-2 bg-v2-accent hover:bg-v2-accent/90 text-v2-bg font-semibold rounded-lg px-4 py-2 text-sm transition-colors"
+                  onClick={buscar}
+                >
+                  <Search size={14} />
+                  Buscar
+                </button>
+              </div>
+            </div>
           </div>
-          <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={onImportFile} />
-        </div>
-        <span className="note max-w-[520px]">El archivo debe traer TABLA, ID_GASTO, IMPORTE, MES_ABONO y CATEGORIA. Se valida formato y existencia de atributos antes de impactar; si hay al menos un error no se aplica nada.</span>
-        {errores.length > 0 && (
-          <div className="note" style={{ background: '#ffe0d9', borderColor: '#ffc4b8' }}>
-            <strong>Errores encontrados:</strong>
-            <ul className="m-0 mt-1 pl-4">
-              {errores.map((er, i) => <li key={i}>Fila {er.fila}: {er.error}</li>)}
-            </ul>
+
+          <div className="bg-v2-surface border border-v2-border rounded-xl overflow-hidden">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-v2-border">
+              <span className="text-sm font-semibold text-v2-text">Resultados</span>
+              <span className="text-xs font-v2mono bg-v2-accent/10 text-v2-accent px-2 py-0.5 rounded-md">{rows.length} registros</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-v2-border">
+                    <th className="text-left px-4 py-3 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider whitespace-nowrap">Tabla</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider whitespace-nowrap">Fecha</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider whitespace-nowrap">Detalle</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider whitespace-nowrap">Categoría</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider whitespace-nowrap">Período</th>
+                    <th className="text-right px-4 py-3 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider whitespace-nowrap">Importe</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r: any) => (
+                    <tr key={`${r.TABLA}-${r.ID_GASTO}`} className="border-b border-v2-border hover:bg-v2-panel transition-colors">
+                      <td className="px-4 py-3 font-v2mono text-v2-subtle">{r.TABLA}</td>
+                      <td className="px-4 py-3 font-v2mono text-v2-text">{r.FECHA_CARGA}</td>
+                      <td className="px-4 py-3 text-v2-text">{r.DETALLE}</td>
+                      <td className="px-4 py-3">
+                        <span className="bg-v2-accent2/15 text-v2-accent2 px-2 py-0.5 rounded text-[10px]">{r.CATEGORIA}</span>
+                      </td>
+                      <td className="px-4 py-3 font-v2mono text-v2-subtle">{r.MES_ABONO}</td>
+                      <td className="px-4 py-3 text-right font-v2mono text-v2-text">{Number(r.IMPORTE).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!rows.length && <p className="text-sm text-v2-subtle px-4 py-4 m-0">Sin resultados todavía — hacé una búsqueda.</p>}
+            </div>
           </div>
-        )}
-      </section>
 
-      <hr className="hr" />
-
-      <section className="flex flex-col gap-3.5">
-        <h6 className="m-0 text-[13px] tracking-wide uppercase">Historial de actualizaciones masivas</h6>
-        <table className="table">
-          <thead><tr><th>Fecha</th><th>Usuario</th><th>Motivo</th><th style={{ textAlign: 'right' }}>Registros</th><th>Estado</th></tr></thead>
-          <tbody>
-            {historial.map((h) => (
-              <tr key={h.ID_HISTORIAL}>
-                <td>{new Date(h.FECHA).toLocaleString('es-AR')}</td>
-                <td>{h.USUARIO}</td>
-                <td>{h.MOTIVO}</td>
-                <td style={{ textAlign: 'right' }}>{h.REGISTROS}</td>
-                <td>
-                  <span className="chip" aria-pressed={h.ESTADO === 'exitoso'} style={h.ESTADO === 'error' ? { borderColor: '#ffc4b8', background: '#ffe0d9' } : undefined}>
-                    {h.ESTADO}
-                  </span>
-                </td>
+          <section className="flex flex-col gap-3.5 bg-v2-surface border border-v2-border rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-v2-text">Actualización retroactiva por Excel</h3>
+            <div className="flex flex-wrap items-end gap-4">
+              <div style={{ minWidth: 280 }}>
+                <label className={V2_LABEL}>Motivo de la edición</label>
+                <input className={V2_INPUT} value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="ej. Corrección de categoría" />
+              </div>
+              <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={onImportFile} className="text-xs text-v2-subtle" />
+            </div>
+            <span className="text-xs text-v2-subtle max-w-[520px]">El archivo debe traer TABLA, ID_GASTO, IMPORTE, MES_ABONO y CATEGORIA. Se valida formato y existencia de atributos antes de impactar; si hay al menos un error no se aplica nada.</span>
+            {errores.length > 0 && (
+              <div className="rounded-lg px-3 py-2.5 border border-v2-danger/30 bg-v2-danger/10">
+                <strong className="text-v2-danger text-xs">Errores encontrados:</strong>
+                <ul className="m-0 mt-1 pl-4 text-xs text-v2-danger">
+                  {errores.map((er, i) => <li key={i}>Fila {er.fila}: {er.error}</li>)}
+                </ul>
+              </div>
+            )}
+          </section>
+        </>
+      ) : (
+        <div className="bg-v2-surface border border-v2-border rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-v2-border">
+            <h3 className="text-sm font-semibold text-v2-text m-0">Historial de actualizaciones masivas</h3>
+          </div>
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-v2-border">
+                <th className="text-left px-5 py-3 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Fecha</th>
+                <th className="text-left px-5 py-3 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Usuario</th>
+                <th className="text-left px-5 py-3 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Motivo</th>
+                <th className="text-right px-5 py-3 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Registros</th>
+                <th className="text-left px-5 py-3 text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Estado</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+            </thead>
+            <tbody>
+              {historial.map((h) => (
+                <tr key={h.ID_HISTORIAL} className="border-b border-v2-border hover:bg-v2-panel transition-colors">
+                  <td className="px-5 py-4 font-v2mono text-v2-text">{new Date(h.FECHA).toLocaleString('es-AR')}</td>
+                  <td className="px-5 py-4 font-v2mono text-v2-subtle">{h.USUARIO}</td>
+                  <td className="px-5 py-4 text-v2-text">{h.MOTIVO}</td>
+                  <td className="px-5 py-4 text-right font-v2mono text-v2-text">{h.REGISTROS}</td>
+                  <td className="px-5 py-4">
+                    <span className={`flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-full text-[10px] font-medium ${
+                      h.ESTADO === 'exitoso' ? 'bg-v2-success/15 text-v2-success' : 'bg-v2-danger/15 text-v2-danger'
+                    }`}>
+                      {h.ESTADO === 'exitoso' ? <CheckCircle size={11} /> : <XCircle size={11} />}
+                      {h.ESTADO.toUpperCase()}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
