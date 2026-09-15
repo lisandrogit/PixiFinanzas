@@ -116,14 +116,20 @@ app.get('/api/auth/me', async (c) => {
 });
 
 // ── Home ─────────────────────────────────────────────────────────────────
-app.get('/api/home/vencimientos', async (c) => c.json(await Q.vencimientos(c.env)));
-app.get('/api/home/salud', async (c) => c.json(await Q.saludFinanciera(c.env)));
-
 function parseCategorias(q: string | undefined): number[] | null {
   if (!q) return null;
   const ids = q.split(',').map((s) => Number(s.trim())).filter((n) => !Number.isNaN(n));
   return ids.length ? ids : null;
 }
+
+app.get('/api/home/vencimientos', async (c) => {
+  const categorias = parseCategorias(c.req.query('categorias'));
+  return c.json(await Q.vencimientos(c.env, categorias));
+});
+app.get('/api/home/salud', async (c) => {
+  const categorias = parseCategorias(c.req.query('categorias'));
+  return c.json(await Q.saludFinanciera(c.env, categorias));
+});
 
 app.get('/api/home/resumen-canal', async (c) => {
   const categorias = parseCategorias(c.req.query('categorias'));

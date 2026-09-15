@@ -118,6 +118,20 @@ describe('home', () => {
     expect(body.sinDatos).toBe(true);
   });
 
+  it('vencimientos honors a categorias filter', async () => {
+    const { cookie } = await login(app, env);
+    // Category 5 ("Boludeces") — a transferencia landing in a next period.
+    await env.DB.prepare(
+      `INSERT INTO GASTOS_TRANSFERENCIA (FECHA_CARGA, DETALLE, ID_CATEGORIA, ID_CUENTA, ID_TIPO_GASTO, ID_CANAL, ID_MES_ABONO, IMPORTE, MONEDA, IMPORTE_USD)
+       VALUES ('2026-10-01', 'Salida', 5, 1, 2, 2, 202610, 15000, 'ARS', 10)`
+    ).run();
+    const included = await (await req('/api/home/vencimientos?categorias=5', {}, cookie)).json();
+    expect(included.totalPeriodo[0]).toBeCloseTo(15000, 1);
+
+    const excluded = await (await req('/api/home/vencimientos?categorias=9', {}, cookie)).json();
+    expect(excluded.totalPeriodo[0]).toBe(0);
+  });
+
   it('computes the salud financiera variation between closed and next periods', async () => {
     const { cookie } = await login(app, env);
     const body = await (await req('/api/home/salud', {}, cookie)).json();
@@ -144,6 +158,21 @@ describe('home', () => {
     const withVariable = await (await req('/api/home/salud', {}, cookie)).json();
     expect(withVariable.sinDatosProximos).toBe(false);
     expect(withVariable.avgNext).toBeCloseTo(20000 / 3, 1);
+  });
+
+  it('salud financiera honors a categorias filter', async () => {
+    const { cookie } = await login(app, env);
+    // Variable cost in category 5 ("Boludeces") landing in a next period.
+    await env.DB.prepare(
+      `INSERT INTO GASTOS_TRANSFERENCIA (FECHA_CARGA, DETALLE, ID_CATEGORIA, ID_CUENTA, ID_TIPO_GASTO, ID_CANAL, ID_MES_ABONO, IMPORTE, MONEDA, IMPORTE_USD)
+       VALUES ('2026-10-01', 'Salida', 5, 1, 2, 2, 202610, 30000, 'ARS', 21)`
+    ).run();
+    const included = await (await req('/api/home/salud?categorias=5', {}, cookie)).json();
+    expect(included.sinDatosProximos).toBe(false);
+    expect(included.avgNext).toBeCloseTo(30000 / 3, 1);
+
+    const excluded = await (await req('/api/home/salud?categorias=9', {}, cookie)).json();
+    expect(excluded.sinDatosProximos).toBe(true);
   });
 
   it('salud financiera counts the current in-progress period as part of the 3 closed periods', async () => {

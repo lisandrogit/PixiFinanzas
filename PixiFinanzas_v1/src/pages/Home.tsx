@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
+import { ChevronDown } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../components/Toast';
 import { LineComboChart, BarComboChart, SaludGauge, V2_ACCENT, V2_ACCENT2, V2_INK } from '../components/Charts';
@@ -39,12 +40,20 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
   const [expPeriod, setExpPeriod] = useState('');
   const [expCanal, setExpCanal] = useState('Ambos');
 
+  // Filtro de categorías propio de "Próximos vencimientos" y "Salud
+  // financiera" — independiente del de "Resumen de gastos" más abajo.
+  // Por default no hay nada destildado, así que entran todas las categorías.
+  const [vencCatsOff, setVencCatsOff] = useState<Record<number, boolean>>({});
+  const [vencDropdownOpen, setVencDropdownOpen] = useState(false);
+  const vencDropdownRef = useRef<HTMLDivElement>(null);
+
   const activeCats = useMemo(() => categorias.filter((c) => !offCats[c.ID_CATEGORIA]).map((c) => c.ID_CATEGORIA), [categorias, offCats]);
   const catQuery = activeCats.length && activeCats.length < categorias.length ? `?categorias=${activeCats.join(',')}` : '';
 
+  const vencActiveCats = useMemo(() => categorias.filter((c) => !vencCatsOff[c.ID_CATEGORIA]).map((c) => c.ID_CATEGORIA), [categorias, vencCatsOff]);
+  const vencCatParam = vencActiveCats.length && vencActiveCats.length < categorias.length ? `?categorias=${vencActiveCats.join(',')}` : '';
+
   useEffect(() => {
-    api.get<Vencimientos>('/home/vencimientos').then(setVenc);
-    api.get<Salud>('/home/salud').then(setSalud);
     api.get<Categoria[]>('/maestros/CAT_CATEGORIA').then((cs) => {
       setCategorias(cs.filter((c) => c.ACTIVO));
     });
@@ -57,12 +66,29 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
   }, [refreshKey]);
 
   useEffect(() => {
+    api.get<Vencimientos>(`/home/vencimientos${vencCatParam}`).then(setVenc);
+    api.get<Salud>(`/home/salud${vencCatParam}`).then(setSalud);
+  }, [vencCatParam, refreshKey]);
+
+  useEffect(() => {
     api.get<CanalRow[]>(`/home/resumen-canal${catQuery}`).then(setCanal);
     api.get<TipoRow[]>(`/home/resumen-tipo${catQuery}`).then(setTipo);
   }, [catQuery, refreshKey]);
 
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (vencDropdownRef.current && !vencDropdownRef.current.contains(e.target as Node)) setVencDropdownOpen(false);
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
+
   function toggleCat(id: number) {
     setOffCats((o) => ({ ...o, [id]: !o[id] }));
+  }
+
+  function toggleVencCat(id: number) {
+    setVencCatsOff((o) => ({ ...o, [id]: !o[id] }));
   }
 
   async function exportXlsx() {
@@ -94,7 +120,37 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
     <div className="flex flex-col gap-6 font-v2sans">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <section className="lg:col-span-3 bg-v2-surface border border-v2-border rounded-xl p-6 min-w-0">
-          <h3 className="text-base font-semibold text-v2-text mb-5">Próximos vencimientos</h3>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <h3 className="text-base font-semibold text-v2-text m-0">Próximos vencimientos</h3>
+            <div className="relative" ref={vencDropdownRef}>
+              <button
+                className="flex items-center gap-2 bg-v2-bg border border-v2-border rounded-lg px-3 py-1.5 text-xs text-v2-subtle hover:text-v2-text transition-colors"
+                onClick={() => setVencDropdownOpen((v) => !v)}
+              >
+                Categorías {vencActiveCats.length < categorias.length ? `(${vencActiveCats.length}/${categorias.length})` : ''}
+                <ChevronDown size={13} className={`transition-transform ${vencDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {vencDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 z-20 w-64 max-h-80 overflow-y-auto bg-v2-panel border border-v2-border rounded-lg shadow-lg p-2">
+                  <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-v2-border">
+                    <span className="text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Incluir en el cálculo</span>
+                    <button className="text-[10px] text-v2-accent hover:text-v2-accent/80" onClick={() => setVencCatsOff({})}>Todas</button>
+                  </div>
+                  {categorias.map((c) => (
+                    <label key={c.ID_CATEGORIA} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-v2-bg cursor-pointer text-xs text-v2-text">
+                      <input
+                        type="checkbox"
+                        className="accent-v2-accent"
+                        checked={!vencCatsOff[c.ID_CATEGORIA]}
+                        onChange={() => toggleVencCat(c.ID_CATEGORIA)}
+                      />
+                      {c.ETIQUETA}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           {venc && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {venc.periods.map((p, pi) => {

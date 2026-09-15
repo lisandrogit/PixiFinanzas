@@ -145,17 +145,19 @@ export async function costosVariablesTop5(env: Env, currency: 'ARS' | 'USD', cat
   };
 }
 
-export async function vencimientos(env: Env) {
+export async function vencimientos(env: Env, categorias: number[] | null) {
   const cur = currentPeriod();
   const periods = nextPeriods(cur, 3);
   const placeholders = periods.map(() => '?').join(',');
+  const catClause = categorias && categorias.length ? `AND ID_CATEGORIA IN (${categorias.map(() => '?').join(',')})` : '';
+  const catArgs = categorias && categorias.length ? categorias : [];
   const [porTarjeta, porTransferencia] = await Promise.all([
     env.DB.prepare(
-      `SELECT TARJETA as tarjeta, MES_ABONO as mes, SUM(IMPORTE) as total FROM VISTA_GASTOS_TARJETA WHERE MES_ABONO IN (${placeholders}) GROUP BY TARJETA, MES_ABONO`
-    ).bind(...periods).all<{ tarjeta: string; mes: number; total: number }>(),
+      `SELECT TARJETA as tarjeta, MES_ABONO as mes, SUM(IMPORTE) as total FROM VISTA_GASTOS_TARJETA WHERE MES_ABONO IN (${placeholders}) ${catClause} GROUP BY TARJETA, MES_ABONO`
+    ).bind(...periods, ...catArgs).all<{ tarjeta: string; mes: number; total: number }>(),
     env.DB.prepare(
-      `SELECT MES_ABONO as mes, SUM(IMPORTE) as total FROM VISTA_GASTOS_TRANSFERENCIA WHERE MES_ABONO IN (${placeholders}) GROUP BY MES_ABONO`
-    ).bind(...periods).all<{ mes: number; total: number }>(),
+      `SELECT MES_ABONO as mes, SUM(IMPORTE) as total FROM VISTA_GASTOS_TRANSFERENCIA WHERE MES_ABONO IN (${placeholders}) ${catClause} GROUP BY MES_ABONO`
+    ).bind(...periods, ...catArgs).all<{ mes: number; total: number }>(),
   ]);
   const tarjetasRes = await env.DB.prepare('SELECT ETIQUETA FROM CAT_TARJETA WHERE ACTIVO = 1 ORDER BY ORDEN').all<{ ETIQUETA: string }>();
   const tarjetas = tarjetasRes.results.map((r) => r.ETIQUETA);
@@ -187,7 +189,7 @@ export async function vencimientos(env: Env) {
   };
 }
 
-export async function saludFinanciera(env: Env) {
+export async function saludFinanciera(env: Env, categorias: number[] | null) {
   const cur = currentPeriod();
   // A diferencia de otros indicadores, acá "3 períodos cerrados" incluye el
   // período actual (mes en curso), no solo los ya cerrados: ej. si hoy es
@@ -196,7 +198,7 @@ export async function saludFinanciera(env: Env) {
   const next = nextPeriods(cur, 3);
   // Solo costos variables: los fijos (alquiler, suscripciones, etc.) no
   // reflejan cambios en el hábito de gasto, así que no deberían mover la aguja.
-  const totals = await sumByMonth(env, [...closed, ...next], null, 'COSTO VARIABLE');
+  const totals = await sumByMonth(env, [...closed, ...next], categorias, 'COSTO VARIABLE');
   const avgClosed = closed.reduce((s, p) => s + totals.get(p)!.ars, 0) / 3;
   const avgNext = next.reduce((s, p) => s + totals.get(p)!.ars, 0) / 3;
   const variacion = avgClosed > 0 ? ((avgNext - avgClosed) / avgClosed) * 100 : 0;
