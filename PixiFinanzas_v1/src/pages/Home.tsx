@@ -152,35 +152,46 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
             </div>
           </div>
           {venc && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {venc.periods.map((p, pi) => {
-                const colVals = venc.tarjetas.map((r) => r.valores[pi]);
-                return (
-                  <div key={p.mes} className="bg-v2-bg rounded-lg p-4 border border-v2-border">
-                    <p className="text-xs font-v2mono text-v2-subtle uppercase tracking-wider mb-3">{p.label}</p>
-                    {venc.tarjetas.map((row) => (
-                      <div key={row.tarjeta} className="flex justify-between items-center mb-2 gap-2">
-                        <span className="text-xs text-v2-subtle truncate">{row.tarjeta}</span>
-                        <span
-                          className="text-xs font-v2mono ml-2 px-1.5 py-0.5 rounded"
-                          style={heatColor(row.valores[pi], colVals)}
-                        >
-                          {money(row.valores[pi], 'ARS', rate)}
-                        </span>
-                      </div>
+            <div className="overflow-x-auto">
+              <table className="w-full" style={{ minWidth: 480 }}>
+                <thead>
+                  <tr className="border-b border-v2-border">
+                    <th className="text-left py-2 text-xs font-v2mono text-v2-subtle uppercase tracking-wider">Medio de pago</th>
+                    {venc.periods.map((p) => (
+                      <th key={p.mes} className="text-right py-2 pl-4 text-xs font-v2mono text-v2-subtle uppercase tracking-wider whitespace-nowrap">{p.label}</th>
                     ))}
-                    <div className="border-t border-v2-border my-3" />
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs text-v2-subtle">Transferencias</span>
-                      <span className="text-xs font-v2mono text-v2-text">{money(venc.transferencia[pi], 'ARS', rate)}</span>
-                    </div>
-                    <div className="flex justify-between items-center mt-3">
-                      <span className="text-xs font-semibold text-v2-text">Total</span>
-                      <span className="text-sm font-bold font-v2mono text-v2-accent">{money(venc.totalPeriodo[pi], 'ARS', rate)}</span>
-                    </div>
-                  </div>
-                );
-              })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {venc.tarjetas.map((row) => (
+                    <tr key={row.tarjeta} className="border-b border-v2-border/50">
+                      <td className="py-3 text-sm text-v2-text">{row.tarjeta}</td>
+                      {row.valores.map((v, pi) => {
+                        const colVals = venc.tarjetas.map((r) => r.valores[pi]);
+                        return (
+                          <td key={pi} className="py-3 pl-4 text-right">
+                            <span className="inline-block text-sm font-v2mono px-2 py-1 rounded" style={heatColor(v, colVals)}>
+                              {money(v, 'ARS', rate)}
+                            </span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                  <tr className="border-b border-v2-border/50">
+                    <td className="py-3 text-sm text-v2-subtle">Transferencias</td>
+                    {venc.transferencia.map((v, i) => (
+                      <td key={i} className="py-3 pl-4 text-right text-sm font-v2mono text-v2-text">{money(v, 'ARS', rate)}</td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="pt-3 text-sm font-semibold text-v2-text">Total</td>
+                    {venc.totalPeriodo.map((v, i) => (
+                      <td key={i} className="pt-3 pl-4 text-right text-base font-bold font-v2mono text-v2-accent">{money(v, 'ARS', rate)}</td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
             </div>
           )}
           {venc?.sinDatos && (
