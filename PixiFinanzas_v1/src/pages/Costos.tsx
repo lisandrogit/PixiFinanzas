@@ -19,10 +19,14 @@ export default function Costos({ refreshKey }: { refreshKey: number }) {
   const catQuery = activeCats.length && activeCats.length < categorias.length ? `&categorias=${activeCats.join(',')}` : '';
 
   useEffect(() => {
-    api.get<TipoRow[]>('/home/resumen-tipo').then(setTipo);
     api.get<ParticipacionRow[]>('/costos/participacion').then(setParticipacion);
     api.get<Categoria[]>('/maestros/CAT_CATEGORIA').then((cs) => setCategorias(cs.filter((c) => c.ACTIVO)));
   }, [refreshKey]);
+
+  useEffect(() => {
+    const catParam = catQuery ? `?${catQuery.slice(1)}` : '';
+    api.get<TipoRow[]>(`/home/resumen-tipo${catParam}`).then(setTipo);
+  }, [catQuery, refreshKey]);
 
   useEffect(() => {
     api.get<VariablesResp>(`/costos/variables?moneda=${currency}${catQuery}`).then(setVariables);
@@ -49,6 +53,25 @@ export default function Costos({ refreshKey }: { refreshKey: number }) {
               onClick={() => setCurrency(c)}
             >
               {c}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 bg-v2-surface border border-v2-border rounded-xl p-4">
+        <span className="text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider">Categorías incluidas en los gráficos</span>
+        <div className="flex flex-wrap gap-1.5">
+          {categorias.map((c) => (
+            <button
+              key={c.ID_CATEGORIA}
+              className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                !offCats[c.ID_CATEGORIA]
+                  ? 'bg-v2-accent/10 border-v2-accent/30 text-v2-accent'
+                  : 'border-v2-border text-v2-subtle hover:text-v2-text'
+              }`}
+              onClick={() => toggleCat(c.ID_CATEGORIA)}
+            >
+              {c.ETIQUETA}
             </button>
           ))}
         </div>
@@ -82,24 +105,7 @@ export default function Costos({ refreshKey }: { refreshKey: number }) {
       </div>
 
       <section className="flex flex-col gap-3.5 bg-v2-bg border border-v2-border rounded-xl p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h3 className="text-sm font-semibold text-v2-text">Detalle de costos variables · top 5 categorías · {currency}</h3>
-          <div className="flex flex-wrap gap-1.5">
-            {categorias.map((c) => (
-              <button
-                key={c.ID_CATEGORIA}
-                className={`px-3 py-1 rounded-full text-xs border transition-colors ${
-                  !offCats[c.ID_CATEGORIA]
-                    ? 'bg-v2-accent/10 border-v2-accent/30 text-v2-accent'
-                    : 'border-v2-border text-v2-subtle hover:text-v2-text'
-                }`}
-                onClick={() => toggleCat(c.ID_CATEGORIA)}
-              >
-                {c.ETIQUETA}
-              </button>
-            ))}
-          </div>
-        </div>
+        <h3 className="text-sm font-semibold text-v2-text">Detalle de costos variables · top 5 categorías · {currency}</h3>
         <figure className="m-0 bg-v2-surface border border-v2-border rounded-xl p-5">
           {variables && (
             variables.categorias.length ? (

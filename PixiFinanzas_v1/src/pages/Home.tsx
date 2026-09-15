@@ -92,35 +92,35 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
 
   return (
     <div className="flex flex-col gap-6 font-v2sans">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <section className="lg:col-span-2 bg-v2-surface border border-v2-border rounded-xl p-5 min-w-0">
-          <h3 className="text-sm font-semibold text-v2-text mb-4">Próximos vencimientos</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <section className="lg:col-span-3 bg-v2-surface border border-v2-border rounded-xl p-6 min-w-0">
+          <h3 className="text-base font-semibold text-v2-text mb-5">Próximos vencimientos</h3>
           {venc && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {venc.periods.map((p, pi) => {
                 const colVals = venc.tarjetas.map((r) => r.valores[pi]);
                 return (
-                  <div key={p.mes} className="bg-v2-bg rounded-lg p-3 border border-v2-border">
-                    <p className="text-[10px] font-v2mono text-v2-subtle uppercase tracking-wider mb-2">{p.label}</p>
+                  <div key={p.mes} className="bg-v2-bg rounded-lg p-4 border border-v2-border">
+                    <p className="text-xs font-v2mono text-v2-subtle uppercase tracking-wider mb-3">{p.label}</p>
                     {venc.tarjetas.map((row) => (
-                      <div key={row.tarjeta} className="flex justify-between items-center mb-1 gap-2">
-                        <span className="text-[10px] text-v2-subtle truncate">{row.tarjeta}</span>
+                      <div key={row.tarjeta} className="flex justify-between items-center mb-2 gap-2">
+                        <span className="text-xs text-v2-subtle truncate">{row.tarjeta}</span>
                         <span
-                          className="text-[10px] font-v2mono ml-2 px-1 rounded"
+                          className="text-xs font-v2mono ml-2 px-1.5 py-0.5 rounded"
                           style={heatColor(row.valores[pi], colVals)}
                         >
                           {money(row.valores[pi], 'ARS', rate)}
                         </span>
                       </div>
                     ))}
-                    <div className="border-t border-v2-border my-2" />
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[10px] text-v2-subtle">Transferencias</span>
-                      <span className="text-[10px] font-v2mono text-v2-text">{money(venc.transferencia[pi], 'ARS', rate)}</span>
+                    <div className="border-t border-v2-border my-3" />
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs text-v2-subtle">Transferencias</span>
+                      <span className="text-xs font-v2mono text-v2-text">{money(venc.transferencia[pi], 'ARS', rate)}</span>
                     </div>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="text-[10px] font-semibold text-v2-text">Total</span>
-                      <span className="text-xs font-bold font-v2mono text-v2-accent">{money(venc.totalPeriodo[pi], 'ARS', rate)}</span>
+                    <div className="flex justify-between items-center mt-3">
+                      <span className="text-xs font-semibold text-v2-text">Total</span>
+                      <span className="text-sm font-bold font-v2mono text-v2-accent">{money(venc.totalPeriodo[pi], 'ARS', rate)}</span>
                     </div>
                   </div>
                 );
@@ -135,9 +135,9 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
           )}
         </section>
 
-        <section className="bg-v2-surface border border-v2-border rounded-xl p-5 flex flex-col items-center justify-center">
-          <h3 className="text-sm font-semibold text-v2-text mb-3 text-center self-stretch">Salud financiera</h3>
-          {salud && !salud.sinDatosProximos && <SaludGauge variacionPct={salud.variacionPct} dark />}
+        <section className="bg-v2-surface border border-v2-border rounded-xl p-4 flex flex-col items-center justify-center">
+          <h3 className="text-sm font-semibold text-v2-text mb-1 text-center self-stretch">Salud financiera</h3>
+          {salud && !salud.sinDatosProximos && <SaludGauge variacionPct={salud.variacionPct} dark height={150} />}
           {salud?.sinDatosProximos ? (
             <>
               <span className="font-bold text-lg text-v2-text leading-tight">Sin datos aún</span>

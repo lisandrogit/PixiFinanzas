@@ -44,7 +44,7 @@ export default function AppShell({ children, onRefresh }: { children: React.Reac
   const sessionLeft = session ? `${Math.max(0, Math.floor(session.secondsLeft / 60))} min` : '';
 
   return (
-    <div className="flex w-full min-h-screen" style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}>
+    <div className="flex w-full min-h-screen bg-v2-bg text-v2-text">
       <aside className="w-64 flex-none min-h-screen bg-v2-bg border-r border-v2-border flex flex-col font-v2sans">
         <div className="flex items-center gap-3 px-6 py-6 border-b border-v2-border">
           <div className="w-8 h-8 rounded-lg bg-v2-accent flex items-center justify-center shrink-0">
