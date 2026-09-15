@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import { ChevronDown } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../components/Toast';
-import { LineComboChart, BarComboChart, SaludGauge, V2_ACCENT, V2_ACCENT2, V2_INK } from '../components/Charts';
+import { LineComboChart, BarComboChart, SaludGauge, gaugeColorFor, V2_ACCENT, V2_ACCENT2, V2_INK } from '../components/Charts';
 
 interface Vencimientos {
   periods: { mes: number; label: string }[];
@@ -23,6 +23,31 @@ function money(v: number, currency: 'ARS' | 'USD', rate: number) {
   const val = currency === 'USD' ? v / rate : v;
   const prefix = currency === 'USD' ? 'US$ ' : '$ ';
   return prefix + val.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Anima el número mostrado hacia `target` en vez de saltar de golpe — se usa
+// para que "Salud financiera" recalcule con una transición suave cuando
+// cambia el filtro de categorías.
+function useCountUp(target: number, duration = 700) {
+  const [value, setValue] = useState(target);
+  const valueRef = useRef(target);
+  useEffect(() => {
+    const from = valueRef.current;
+    if (from === target) return;
+    let raf: number;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const next = from + (target - from) * eased;
+      valueRef.current = next;
+      setValue(next);
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return value;
 }
 
 
@@ -116,6 +141,8 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
     return { background: `color-mix(in srgb, var(--color-accent) ${(8 + t * 46).toFixed(0)}%, #ffffff)`, color: 'var(--color-accent-700)' };
   };
 
+  const animatedSaludPct = useCountUp(salud && !salud.sinDatosProximos ? salud.variacionPct : 0, 700);
+
   return (
     <div className="flex flex-col gap-6 font-v2sans">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -203,7 +230,18 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
         </section>
 
         <section className="bg-v2-surface border border-v2-border rounded-xl p-4 flex flex-col items-center justify-center">
-          <h3 className="text-sm font-semibold text-v2-text mb-1 text-center self-stretch">Salud financiera</h3>
+          <div className="flex items-center justify-center gap-2 mb-1 self-stretch">
+            <h3 className="text-sm font-semibold text-v2-text text-center m-0">Salud financiera</h3>
+            {salud && !salud.sinDatosProximos && (
+              <span className="relative flex h-2 w-2" title="Indicador en vivo">
+                <span
+                  className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                  style={{ background: gaugeColorFor(salud.variacionPct) }}
+                />
+                <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: gaugeColorFor(salud.variacionPct) }} />
+              </span>
+            )}
+          </div>
           {salud && !salud.sinDatosProximos && <SaludGauge variacionPct={salud.variacionPct} dark height={150} />}
           {salud?.sinDatosProximos ? (
             <>
@@ -217,7 +255,12 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
           ) : (
             <>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="font-bold text-2xl font-v2mono text-v2-text">{salud ? `${salud.variacionPct >= 0 ? '+' : ''}${salud.variacionPct.toFixed(1)}%` : '—'}</span>
+                <span
+                  className="font-bold text-2xl font-v2mono transition-colors duration-300"
+                  style={{ color: salud ? gaugeColorFor(salud.variacionPct) : undefined }}
+                >
+                  {salud ? `${animatedSaludPct >= 0 ? '+' : ''}${animatedSaludPct.toFixed(1)}%` : '—'}
+                </span>
               </div>
               <span className="text-[11px] text-v2-subtle mt-1 text-center">vs. promedio 3 períodos cerrados</span>
             </>

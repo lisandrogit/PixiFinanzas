@@ -109,15 +109,39 @@ const GAUGE_COLORS: [number, string][] = [
   [0.2, '#16794f'], [0.4, '#5fae73'], [0.6, '#e0b02c'], [0.8, '#e07a3c'], [1, '#c9372a'],
 ];
 
+// Color de zona (verde→rojo) para un valor de -30 a 30 — usado tanto por el
+// propio needle del gauge como por el indicador "en vivo" que lo acompaña en
+// Home.tsx, para que ambos coincidan siempre.
+export function gaugeColorFor(pct: number): string {
+  const clamped = Math.max(-30, Math.min(30, pct));
+  const norm = (clamped + 30) / 60;
+  for (const [stop, color] of GAUGE_COLORS) if (norm <= stop) return color;
+  return GAUGE_COLORS[GAUGE_COLORS.length - 1][1];
+}
+
 export function SaludGauge({ variacionPct, height = 220, dark = false }: { variacionPct: number; height?: number; dark?: boolean }) {
   const clamped = Math.max(-30, Math.min(30, variacionPct));
+  const pointerColor = gaugeColorFor(variacionPct);
   const option = {
+    // Sweep suave tanto en el montaje inicial como cuando el valor cambia
+    // (ej. al tildar/destildar categorías) — sin esto el needle salta de golpe.
+    animationDuration: 1100,
+    animationEasing: 'cubicOut',
+    animationDurationUpdate: 900,
+    animationEasingUpdate: 'cubicOut',
     series: [{
       type: 'gauge',
       startAngle: 180, endAngle: 0, min: -30, max: 30,
       radius: '100%', center: ['50%', '78%'],
       axisLine: { lineStyle: { width: 22, color: GAUGE_COLORS } },
-      pointer: { itemStyle: { color: dark ? INK_DARK : '#201e1d' }, width: 5, length: '55%' },
+      pointer: {
+        width: 6, length: '58%',
+        itemStyle: { color: pointerColor, shadowColor: pointerColor, shadowBlur: 10 },
+      },
+      anchor: {
+        show: true, showAbove: true, size: 14,
+        itemStyle: { color: dark ? INK_DARK : '#201e1d', borderColor: pointerColor, borderWidth: 3 },
+      },
       axisTick: { show: false }, splitLine: { length: 10, lineStyle: { color: dark ? '#141720' : '#fff', width: 2 } },
       axisLabel: { fontFamily: dark ? V2_FONT : FONT, fontSize: 10, color: dark ? '#7b83a6' : '#605d5d', distance: -34 },
       detail: { show: false },
