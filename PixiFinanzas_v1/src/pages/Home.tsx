@@ -165,11 +165,11 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
                 <tbody>
                   {venc.tarjetas.map((row) => (
                     <tr key={row.tarjeta} className="border-b border-v2-border/50">
-                      <td className="py-3 text-sm text-v2-text">{row.tarjeta}</td>
+                      <td className="py-1.5 text-sm text-v2-text">{row.tarjeta}</td>
                       {row.valores.map((v, pi) => {
                         const colVals = venc.tarjetas.map((r) => r.valores[pi]);
                         return (
-                          <td key={pi} className="py-3 pl-4 text-right">
+                          <td key={pi} className="py-1.5 pl-4 text-right">
                             <span className="inline-block text-sm font-v2mono px-2 py-1 rounded" style={heatColor(v, colVals)}>
                               {money(v, 'ARS', rate)}
                             </span>
@@ -179,15 +179,15 @@ export default function Home({ refreshKey }: { refreshKey: number }) {
                     </tr>
                   ))}
                   <tr className="border-b border-v2-border/50">
-                    <td className="py-3 text-sm text-v2-subtle">Transferencias</td>
+                    <td className="py-1.5 text-sm text-v2-subtle">Transferencias</td>
                     {venc.transferencia.map((v, i) => (
-                      <td key={i} className="py-3 pl-4 text-right text-sm font-v2mono text-v2-text">{money(v, 'ARS', rate)}</td>
+                      <td key={i} className="py-1.5 pl-4 text-right text-sm font-v2mono text-v2-text">{money(v, 'ARS', rate)}</td>
                     ))}
                   </tr>
                   <tr>
-                    <td className="pt-3 text-sm font-semibold text-v2-text">Total</td>
+                    <td className="pt-1.5 text-sm font-semibold text-v2-text">Total</td>
                     {venc.totalPeriodo.map((v, i) => (
-                      <td key={i} className="pt-3 pl-4 text-right text-base font-bold font-v2mono text-v2-accent">{money(v, 'ARS', rate)}</td>
+                      <td key={i} className="pt-1.5 pl-4 text-right text-base font-bold font-v2mono text-v2-accent">{money(v, 'ARS', rate)}</td>
                     ))}
                   </tr>
                 </tbody>
