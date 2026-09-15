@@ -450,7 +450,14 @@ async function upsertCotizacion(env: Env, valorVenta: number) {
 
 app.get('/api/cotizacion/oficial', async (c) => {
   try {
-    const res = await fetch(c.env.DOLAR_API_URL);
+    // Sin esto, el runtime de Workers puede cachear la subrequest en el edge
+    // de Cloudflare según los headers de cache de dolarapi.com — si esos
+    // headers piden un TTL largo, el valor queda "pegado" por días aunque la
+    // cotización real ya haya cambiado. cacheTtl:0 fuerza a ir siempre a origen.
+    const res = await fetch(c.env.DOLAR_API_URL, {
+      cf: { cacheTtl: 0, cacheEverything: false },
+      headers: { 'Cache-Control': 'no-cache' },
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = (await res.json()) as { venta: number; fechaActualizacion: string };
     return c.json({ venta: data.venta, fecha: formatDateDMY(data.fechaActualizacion) });

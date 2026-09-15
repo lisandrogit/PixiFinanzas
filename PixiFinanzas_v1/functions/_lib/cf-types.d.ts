@@ -18,3 +18,9 @@ interface D1Database {
   prepare(query: string): D1PreparedStatement;
   exec(query: string): Promise<unknown>;
 }
+
+// Cloudflare-specific fetch() option, merged onto DOM's RequestInit so
+// outbound subrequests can opt out of the Workers runtime's edge cache.
+interface RequestInit {
+  cf?: { cacheTtl?: number; cacheEverything?: boolean };
+}
